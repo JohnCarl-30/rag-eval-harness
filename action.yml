@@ -1,0 +1,110 @@
+name: rag-eval
+description: Evaluate RAG traces or an HTTP SUT and fail if mean metrics regress vs a baseline
+author: rag-eval-harness
+
+inputs:
+  traces:
+    description: Precomputed traces file (CSV/JSONL/JSON)
+    required: false
+  dataset:
+    description: Golden dataset file (use with sut-url)
+    required: false
+  sut-url:
+    description: HTTP SUT URL accepting POST {"question"}
+    required: false
+  sut-token:
+    description: Optional bearer token for the SUT
+    required: false
+  evaluator:
+    description: stub or ragas
+    required: false
+    default: stub
+  baseline:
+    description: Baseline run id or JSON file containing means
+    required: false
+  threshold:
+    description: Fail if any mean drops by more than this
+    required: false
+    default: "0.05"
+  output:
+    description: Path to write the head JSON snapshot
+    required: false
+    default: rag-eval-results.json
+  database-url:
+    description: SQLAlchemy URL
+    required: false
+  openai-api-key:
+    description: Judge key for the ragas evaluator
+    required: false
+  openai-base-url:
+    description: Optional OpenAI-compatible base URL
+    required: false
+  package:
+    description: Install target (rag-eval-harness or . for this repo)
+    required: false
+    default: rag-eval-harness
+  extra:
+    description: Extra to append, e.g. [ragas]
+    required: false
+    default: ""
+  python-version:
+    description: Python version
+    required: false
+    default: "3.12"
+  label:
+    description: Optional run label
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install rag-eval-harness
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install "${{ inputs.package }}${{ inputs.extra }}"
+    - name: Evaluate
+      shell: bash
+      env:
+        DATABASE_URL: ${{ inputs.database-url }}
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+        OPENAI_BASE_URL: ${{ inputs.openai-base-url }}
+      run: |
+        set -euo pipefail
+        SOURCE="${{ inputs.traces }}"
+        if [[ -n "${{ inputs.dataset }}" ]]; then
+          SOURCE="${{ inputs.dataset }}"
+        fi
+        if [[ -z "$SOURCE" ]]; then
+          echo "Provide traces or dataset" >&2
+          exit 2
+        fi
+        ARGS=(eval "$SOURCE" --evaluator "${{ inputs.evaluator }}" --output "${{ inputs.output }}")
+        if [[ -n "${{ inputs.sut-url }}" ]]; then
+          ARGS+=(--sut-url "${{ inputs.sut-url }}")
+        fi
+        if [[ -n "${{ inputs.sut-token }}" ]]; then
+          ARGS+=(--sut-token "${{ inputs.sut-token }}")
+        fi
+        if [[ -n "${{ inputs.label }}" ]]; then
+          ARGS+=(--label "${{ inputs.label }}")
+        fi
+        if [[ -n "${{ github.sha }}" ]]; then
+          ARGS+=(--git-sha "${{ github.sha }}")
+        fi
+        rag-eval "${ARGS[@]}"
+    - name: Regress vs baseline
+      if: ${{ inputs.baseline != '' }}
+      shell: bash
+      env:
+        DATABASE_URL: ${{ inputs.database-url }}
+      run: |
+        rag-eval regress \
+          --baseline "${{ inputs.baseline }}" \
+          --head "${{ inputs.output }}" \
+          --threshold "${{ inputs.threshold }}"

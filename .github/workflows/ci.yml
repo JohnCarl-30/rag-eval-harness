@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: uv sync --frozen --group dev
+      - name: Ruff
+        run: uv run ruff check src tests
+      - name: Pytest
+        run: uv run pytest -q
+      - name: Consumer action (stub eval)
+        uses: ./
+        with:
+          package: .
+          traces: examples/dummy-rag/traces.jsonl
+          evaluator: stub
+          output: rag-eval-results.json
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose smoke
+        env:
+          RAG_EVAL_API_KEY: ci-smoke-key
+        run: |
+          docker compose up --build -d
+          bash scripts/smoke.sh
+          docker compose down -v

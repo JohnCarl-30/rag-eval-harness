@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rag-eval-harness"
+version = "0.1.0"
+description = "RAGAS with a memory and a diff view — evaluate RAG pipelines, persist runs, and fail CI on regressions."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "John Carl Santos", email = "johncarlsantos30@gmail.com" },
+]
+keywords = ["rag", "evaluation", "ragas", "llm", "ci"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastapi>=0.115",
+    "httpx>=0.28",
+    "pydantic-settings>=2.6",
+    "pydantic>=2.10",
+    "python-dotenv>=1.0",
+    "python-multipart>=0.0.18",
+    "sqlalchemy>=2.0.36",
+    "typer>=0.15",
+    "uvicorn[standard]>=0.32",
+]
+
+[project.optional-dependencies]
+ragas = [
+    "openai>=1.40",
+    "ragas>=0.2",
+]
+postgres = [
+    "psycopg[binary]>=3.2",
+]
+
+[project.scripts]
+rag-eval = "rag_eval_harness.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/LICENSE",
+    "/README.md",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/rag_eval_harness/api/routes.py" = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

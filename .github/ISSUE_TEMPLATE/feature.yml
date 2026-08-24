@@ -1,0 +1,21 @@
+name: Feature request
+description: Propose an evaluation-orchestration feature
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Ingestion, chunking, vector stores, agent/tool-call metrics, JSONPath API mapping,
+        Redis workers, and multi-user SaaS are out of scope for v1.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true

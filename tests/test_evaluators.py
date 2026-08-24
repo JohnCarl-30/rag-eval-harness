@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from rag_eval_harness.evaluators.stub import StubEvaluator
+from rag_eval_harness.types import EvalRow
+
+
+def test_stub_is_deterministic_and_adaptive() -> None:
+    rows = [
+        EvalRow(question="Q1", answer="A1", retrieved_contexts=["c1"], ground_truth="G1"),
+        EvalRow(question="Q2", answer="A2", retrieved_contexts=["c2"]),
+    ]
+    first = StubEvaluator().evaluate(rows)
+    second = StubEvaluator().evaluate(rows)
+    assert first.means == second.means
+    assert 0.5 <= first.means["faithfulness"] <= 1.0
+    assert 0.5 <= first.means["answer_relevancy"] <= 1.0
+    assert "context_precision" in first.rows[0].metrics
+    assert "context_recall" in first.rows[0].metrics
+    assert "context_precision" not in first.rows[1].metrics
+    assert first.error_count == 0
+
+
+def test_stub_preserves_row_errors() -> None:
+    rows = [EvalRow(question="Q", error="http adapter: timeout")]
+    summary = StubEvaluator().evaluate(rows)
+    assert summary.error_count == 1
+    assert summary.rows[0].error == "http adapter: timeout"
+    assert summary.means["faithfulness"] == 0.0

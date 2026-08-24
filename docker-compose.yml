@@ -1,0 +1,53 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/rag_eval.db}
+      RAG_EVAL_API_KEY: ${RAG_EVAL_API_KEY:-dev-key}
+      RAG_EVAL_HOST: "0.0.0.0"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+    volumes:
+      - rag-eval-data:/data
+    depends_on:
+      dummy-rag:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  dummy-rag:
+    build: examples/dummy-rag
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag
+      POSTGRES_DB: rag_eval
+    ports:
+      - "5432:5432"
+    volumes:
+      - rag-eval-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag -d rag_eval"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  rag-eval-data:
+  rag-eval-pg:
