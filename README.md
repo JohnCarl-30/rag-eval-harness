@@ -11,7 +11,7 @@ This is not a RAG framework. There is no ingestion or retrieval stack. Evaluatio
 Requires Python 3.11+ ([uv](https://docs.astral.sh/uv/) recommended) and, for the UI, Node 20+.
 
 ```bash
-git clone <this-repo> rag-eval-harness && cd rag-eval-harness
+git clone https://github.com/JohnCarl-30/rag-eval-harness.git && cd rag-eval-harness
 uv sync
 ```
 
@@ -52,9 +52,8 @@ docker compose up --build
 ## Install
 
 ```bash
-pip install rag-eval-harness           # CLI + API + stub evaluator
-pip install 'rag-eval-harness[ragas]'  # + RAGAS judge
-pip install 'rag-eval-harness[postgres]'
+pip install git+https://github.com/JohnCarl-30/rag-eval-harness.git
+pip install 'rag-eval-harness[ragas]'   # after a PyPI release, or: pip install '.[ragas]' from a clone
 ```
 
 ```bash
@@ -74,13 +73,13 @@ rag-eval serve
 | Columns | `question` required. Optional `ground_truth`. Traces also need `answer` and `retrieved_contexts` (JSON list or `\|` / newline delimited). Aliases: `user_input`, `reference`, `response`, `contexts`. |
 | HTTP SUT | `POST {"question"}` → `{"answer","retrieved_contexts"}`. Optional bearer. Per-row timeout; a failed row is an error, the run continues. |
 | Metrics | Always faithfulness + answer relevancy. Context precision + context recall when `ground_truth` is present. |
-| Evaluators | `stub` (stable 0–1 hashes, CI/demo) and `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
+| Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context — use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
 | Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. |
 | Regression | Tag a run as baseline. Gate on **mean** delta. Per-row diffs are UI-only. |
 
-Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [storage](docs/storage.md)
+Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [storage](docs/storage.md) · [Nimbus case study](docs/nimbus-case-study.md)
 
 ## GitHub Action
 

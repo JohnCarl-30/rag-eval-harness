@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from rag_eval_harness.evaluators import get_evaluator
+from rag_eval_harness.evaluators.lexical import LexicalEvaluator
 from rag_eval_harness.evaluators.stub import StubEvaluator
 from rag_eval_harness.types import EvalRow
 
@@ -26,3 +28,27 @@ def test_stub_preserves_row_errors() -> None:
     assert summary.error_count == 1
     assert summary.rows[0].error == "http adapter: timeout"
     assert summary.means["faithfulness"] == 0.0
+
+
+def test_lexical_rewards_grounded_extractive_answers() -> None:
+    rows = [
+        EvalRow(
+            question="How many seats on Growth?",
+            answer="Growth includes 10 seats and 10M events.",
+            retrieved_contexts=["Growth (10 seats, 10M events)."],
+            ground_truth="Growth includes 10 seats and 10M events.",
+        ),
+        EvalRow(
+            question="How many seats on Growth?",
+            answer="We support unlimited Salesforce sync.",
+            retrieved_contexts=["Growth (10 seats, 10M events)."],
+            ground_truth="Growth includes 10 seats and 10M events.",
+        ),
+    ]
+    summary = LexicalEvaluator().evaluate(rows)
+    assert summary.rows[0].metrics["faithfulness"] > summary.rows[1].metrics["faithfulness"]
+    assert summary.rows[0].metrics["context_recall"] >= summary.rows[1].metrics["context_recall"]
+
+
+def test_get_evaluator_lexical() -> None:
+    assert get_evaluator("lexical").name == "lexical"

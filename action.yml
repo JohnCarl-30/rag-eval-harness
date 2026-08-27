@@ -16,7 +16,7 @@ inputs:
     description: Optional bearer token for the SUT
     required: false
   evaluator:
-    description: stub or ragas
+    description: stub, lexical, or ragas
     required: false
     default: stub
   baseline:

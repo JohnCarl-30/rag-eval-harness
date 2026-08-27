@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from rag_eval_harness.io import LoadError, RowCapError, load_csv_text, load_jsonl_text, load_text
+from rag_eval_harness.io import (
+    LoadError,
+    RowCapError,
+    load_csv_text,
+    load_jsonl_text,
+    load_path,
+    load_text,
+)
 from rag_eval_harness.types import ROW_CAP
 
 
@@ -47,3 +54,13 @@ def test_row_cap() -> None:
 def test_missing_question_column() -> None:
     with pytest.raises(LoadError):
         load_csv_text("foo,bar\n1,2\n")
+
+
+def test_nimbus_golden_loads_under_cap() -> None:
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "examples" / "nimbus" / "golden.csv"
+    rows = load_path(path)
+    assert 30 <= len(rows) <= 100
+    assert all(row.question for row in rows)
+    assert sum(1 for row in rows if row.has_ground_truth()) == len(rows)

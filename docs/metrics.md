@@ -22,6 +22,14 @@ Default. No judge key. Hashes `question` / `answer` / contexts / ground truth in
 rag-eval eval traces.jsonl --evaluator stub
 ```
 
+## Lexical evaluator
+
+Token overlap. No judge key. Faithfulness is answer tokens found in retrieved context; context recall is ground-truth tokens found in context. Use this when you need a gate that actually moves when retrieval gets worse (see [Nimbus case study](nimbus-case-study.md)).
+
+```bash
+rag-eval eval golden.csv --sut-url http://127.0.0.1:3000/api/eval --evaluator lexical
+```
+
 ## RAGAS evaluator
 
 Wraps the collections-style metrics API (`ragas.metrics.collections`), not the deprecated `evaluate()` helper.

@@ -1,0 +1,41 @@
+question,ground_truth,expected_slug
+"What is a Nimbus workspace?","A Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",workspaces
+"Can event data cross Nimbus workspaces?","Event data never crosses workspaces.",workspaces
+"Should an agency use one workspace for every client?","Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",workspaces
+"Does renaming a workspace change the API workspace ID?","Changing the name does not change the workspace ID used in the API.",workspaces
+"How does Nimbus billing work?","Nimbus bills two dimensions: seats plus a monthly event quota.",billing-seats-events
+"Do pending invites count as billed seats?","Pending invites do not count until they accept.",billing-seats-events
+"Do nimbus.* system events count toward quota?","Internal nimbus.* system events are free and do not count toward quota.",billing-seats-events
+"What happens if I exceed events mid-cycle?","If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",billing-seats-events
+"Which day is seat count taken from on the invoice?","Seat count on the invoice is a snapshot from the last day of the billing period.",billing-seats-events
+"What is the Growth plan event quota?","Growth includes 10 seats and 10M events.",billing-seats-events
+"What happens if a Nimbus payment fails?","If a card is declined we retry on day 3, 7, and 14. You will get email each time.",failed-payment
+"When do new event writes pause after a declined card?","New event writes pause only after day 14. Existing data is not deleted.",failed-payment
+"Is there a reactivation fee after I update the card?","We do not charge a reactivation fee.",failed-payment
+"Which plans include SSO?","SSO is available on Growth and Scale.",sso
+"How do I stop an SSO login loop?","If SSO loops, check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first.",sso
+"Is JIT provisioning on by default?","JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers.",sso
+"Can I use personal Gmail with Google SSO?","Personal Gmail accounts are rejected.",sso
+"What is the difference between project write keys and workspace read keys?","Project write keys send events. Workspace read keys query data and cannot ingest events.",api-keys
+"What HTTP status is returned when I burst past the rate limit?","Burst above that returns HTTP 429 with Retry-After.",api-keys
+"Can I put a workspace read key in frontend code?","Never ship a read key in frontend code.",api-keys
+"What is the write-key rate limit?","100 requests / second per write key.",api-keys
+"How long does Starter keep raw events?","Starter keeps 30 days. Raw events older than the retention window are deleted on a nightly job around 03:00 UTC.",data-retention
+"What happens to old events if I downgrade from Growth to Starter?","If you downgrade from Growth to Starter, events older than 30 days are deleted on the next nightly job. Export first.",data-retention
+"What is the CSV export row cap?","CSV exports are capped at 500,000 rows per file.",data-retention
+"How long before a teammate invite expires?","An invite expires after 7 days.",inviting-teammates
+"Do expired invites occupy a seat?","Expired invites do not occupy a seat.",inviting-teammates
+"Can I demote the last owner?","You cannot demote the last owner. Transfer ownership first.",inviting-teammates
+"What can a viewer do?","Viewer: read dashboards only.",inviting-teammates
+"Why does my funnel show zeros?","Usually a renamed event, a filter, or timezone, not lost data.",funnel-zeros
+"Does renaming an event in code rename historical events?","Renaming an event in code does not rename historical events.",funnel-zeros
+"Does Starter sample events?","Starter samples at 1% after 200k events in a day.",funnel-zeros
+"When does Export CSV email a link instead of downloading?","Files under 50 MB download in the browser. Larger jobs email a signed link to the requester that expires in 24 hours.",csv-export
+"How long until the signed export link expires?","The signed link expires in 24 hours.",csv-export
+"How long is a deleted project in the recycle bin?","For 7 days an owner can restore it from Settings → Recycle bin.",delete-project
+"Does deleting a project change seat count?","Deleting a project does not change seat count.",delete-project
+"Is the project ID reused after deletion?","After that, events and charts are deleted and the project ID is never reused.",delete-project
+"How do I connect Nimbus to Salesforce?","I don't have that in the Nimbus help center.",
+"Where do I download your SOC 2 report?","I don't have that in the Nimbus help center.",
+"Can I pay for Nimbus with crypto?","I don't have that in the Nimbus help center.",
+"Does Nimbus have an iOS app?","I don't have that in the Nimbus help center.",

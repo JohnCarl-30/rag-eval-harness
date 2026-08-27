@@ -15,7 +15,7 @@ GROUND_TRUTH_METRICS: tuple[str, ...] = (METRIC_CONTEXT_PRECISION, METRIC_CONTEX
 
 RunStatus = Literal["queued", "running", "completed", "failed"]
 AdapterType = Literal["traces", "http"]
-EvaluatorName = Literal["stub", "ragas"]
+EvaluatorName = Literal["stub", "lexical", "ragas"]
 
 COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
     "question": ("question", "user_input"),

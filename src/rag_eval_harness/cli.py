@@ -109,7 +109,7 @@ def eval(  # noqa: A001 — matches the public CLI contract
         str | None,
         typer.Option("--sut-token", help="Optional bearer token sent to the SUT."),
     ] = None,
-    evaluator: Annotated[str, typer.Option(help="stub or ragas.")] = "stub",
+    evaluator: Annotated[str, typer.Option(help="stub, lexical, or ragas.")] = "stub",
     timeout: Annotated[float, typer.Option(help="Per-row HTTP timeout in seconds.")] = 30.0,
     label: Annotated[str | None, typer.Option(help="Optional run label.")] = None,
     git_sha: Annotated[str | None, typer.Option(help="Optional git SHA to record.")] = None,
