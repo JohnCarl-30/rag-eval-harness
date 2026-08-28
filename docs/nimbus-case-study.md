@@ -8,7 +8,7 @@ The support widget in **Relaydesk** (`~/Documents/relaydesk`) is the system unde
 
 ## Setup
 
-- Golden set: 40 questions against the seeded Nimbus help center ([`golden.csv`](../examples/nimbus/golden.csv)). 36 are in-corpus; 4 are out of scope.
+- Golden set: 40 questions against the seeded Nimbus help center ([`golden.csv`](../examples/nimbus/golden.csv) as of 2026-08-27). 36 are in-corpus; 4 are out of scope. The live CSV is now 50 rows. See [reasons.md](../examples/nimbus/reasons.md). The snapshots below are the original 40.
 - SUT: `POST /api/eval` with `{"question"}` → `{"answer","retrieved_contexts"}`. Extractive answers, no judge LLM.
 - Scorer: `--evaluator lexical` (token overlap). Stub hashes are for keyless UI/CI smoke, not this report.
 - Baseline retriever: top-3, title weight 4.
@@ -65,3 +65,5 @@ Copy for LinkedIn (edit the first line if you want):
 > Harness: https://github.com/JohnCarl-30/rag-eval-harness
 > Case study: https://github.com/JohnCarl-30/rag-eval-harness/blob/main/docs/nimbus-case-study.md
 > Resume: Shipped a RAG eval harness and gated a support bot: a weaker retriever cut mean context recall 0.88 → 0.74 and failed CI at a 0.05 threshold (40-row golden set).
+
+The second incident is the index, not k. [Chunking case study](nimbus-chunking.md).

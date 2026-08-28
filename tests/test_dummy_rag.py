@@ -27,6 +27,13 @@ def test_dummy_retrieve_office_hours() -> None:
     assert contexts
 
 
+def test_dummy_retrieve_spanish_support() -> None:
+    module = _load_server()
+    answer, contexts = module.retrieve("¿Cómo contacto a soporte?")
+    assert "docs-help" in answer
+    assert "Soporte" in contexts[0]
+
+
 def test_dummy_http_adapter_roundtrip() -> None:
     module = _load_server()
 

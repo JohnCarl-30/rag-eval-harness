@@ -83,6 +83,11 @@ KNOWLEDGE: list[tuple[list[str], str, str]] = [
         "The assistant answers in English. Uploaded docs may be English or Spanish.",
         "i18n notes: answers in English; corpus languages: en, es.",
     ),
+    (
+        ["cómo contacto", "contacto a soporte", "soporte"],
+        "Abre un ticket en #docs-help o escribe a support@acme.example.",
+        "Soporte: Slack #docs-help y support@acme.example.",
+    ),
 ]
 
 FALLBACK_ANSWER = "I do not have that in the Acme Docs corpus."

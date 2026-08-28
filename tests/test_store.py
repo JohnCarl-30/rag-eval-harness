@@ -46,5 +46,5 @@ def test_eval_from_traces_persists_means(store: Store, traces_jsonl) -> None:
     assert "faithfulness" in run.means
     assert "answer_relevancy" in run.means
     assert "context_precision" in run.means
-    assert len(store.get_run_scores(run.id)) == 15
-    assert store.list_datasets()[0].row_count == 15
+    assert len(store.get_run_scores(run.id)) == 16
+    assert store.list_datasets()[0].row_count == 16

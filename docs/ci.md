@@ -14,13 +14,13 @@ From a checkout of this repository:
     package: .
 ```
 
-From another repo, after this project is tagged:
+From another repo, after this project is tagged. `stub` is smoke. Use `lexical` when the gate should mean overlap, not hashes.
 
 ```yaml
 - uses: JohnCarl-30/rag-eval-harness@v0.1.0
   with:
     traces: tests/golden/traces.jsonl
-    evaluator: stub
+    evaluator: lexical
     baseline: tests/golden/baseline.json
     output: rag-eval-results.json
 ```
@@ -46,7 +46,7 @@ The action runs `rag-eval eval` then, if `baseline` is set, `rag-eval regress` (
 Commit a snapshot from a known-good run as `baseline.json`:
 
 ```bash
-rag-eval eval traces.jsonl --evaluator stub -o tests/golden/baseline.json
+rag-eval eval traces.jsonl --evaluator lexical -o tests/golden/baseline.json
 ```
 
 ## This repository's CI
@@ -59,7 +59,7 @@ On push and pull request:
 
 RAGAS live scoring is not required to merge.
 
-Relaydesk (the support widget) runs its own gate: `eval/golden.csv` against `POST /api/eval`, then `rag-eval regress` vs `eval/baseline.json`. See [nimbus-case-study.md](nimbus-case-study.md).
+Relaydesk (the support widget) runs its own gate: `eval/golden.csv` against `POST /api/eval`, then `rag-eval regress` vs `eval/baseline.json`. See [nimbus-case-study.md](nimbus-case-study.md) (weaker `k`) and [nimbus-chunking.md](nimbus-chunking.md) (paragraph index). Both fail the same 0.05 recall gate. Production stayed on title-boosted top-3 articles. Why the job uses lexical, not RAGAS: [nimbus-cost.md](nimbus-cost.md). When overlap and a judge fight: [nimbus-judge.md](nimbus-judge.md).
 
 ## PyPI (optional)
 

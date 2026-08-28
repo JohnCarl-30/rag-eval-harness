@@ -1,0 +1,693 @@
+{
+  "run_id": "c3b2d473-d3f6-4780-b134-5211146d7d63",
+  "dataset_id": "d55e3bc9-1617-4117-967c-65d5f9f32f2f",
+  "evaluator": "lexical",
+  "adapter_type": "http",
+  "label": "nimbus-chunked",
+  "git_sha": null,
+  "status": "completed",
+  "means": {
+    "faithfulness": 0.754302,
+    "answer_relevancy": 0.59539,
+    "context_precision": 0.149608,
+    "context_recall": 0.781583
+  },
+  "error_count": 0,
+  "is_baseline": false,
+  "rows": [
+    {
+      "question": "What is a Nimbus workspace?",
+      "answer": "A Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API."
+      ],
+      "ground_truth": "A Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+      "metrics": {
+        "faithfulness": 0.6471,
+        "answer_relevancy": 1.0,
+        "context_precision": 0.2973,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Can event data cross Nimbus workspaces?",
+      "answer": "Event data never crosses workspaces. A Nimbus workspace holds your projects, teammates, and bill.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API."
+      ],
+      "ground_truth": "Event data never crosses workspaces.",
+      "metrics": {
+        "faithfulness": 0.6471,
+        "answer_relevancy": 0.8,
+        "context_precision": 0.1351,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Should an agency use one workspace for every client?",
+      "answer": "Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate. Create one workspace per company.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API.",
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces."
+      ],
+      "ground_truth": "Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+      "metrics": {
+        "faithfulness": 0.76,
+        "answer_relevancy": 0.5714,
+        "context_precision": 0.4595,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Does renaming a workspace change the API workspace ID?",
+      "answer": "Changing the name does not change the workspace ID used in the API. The owner can rename a workspace from Settings \u2192 General.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API.",
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces."
+      ],
+      "ground_truth": "Changing the name does not change the workspace ID used in the API.",
+      "metrics": {
+        "faithfulness": 0.6667,
+        "answer_relevancy": 0.8,
+        "context_precision": 0.1892,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "How does Nimbus billing work?",
+      "answer": "Events: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+        "How billing works: seats and events\n\nSeat count on the invoice is a snapshot from the last day of the billing period. If someone left on day 28 they still appear on that invoice."
+      ],
+      "ground_truth": "Nimbus bills two dimensions: seats plus a monthly event quota.",
+      "metrics": {
+        "faithfulness": 0.7619,
+        "answer_relevancy": 0.6667,
+        "context_precision": 0.1053,
+        "context_recall": 0.4444
+      },
+      "error": null
+    },
+    {
+      "question": "Do pending invites count as billed seats?",
+      "answer": "Pending invites do not count until they accept. Seats: every person with login access counts, including viewers.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nSeats: every person with login access counts, including viewers. Pending invites do not count until they accept.",
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota."
+      ],
+      "ground_truth": "Pending invites do not count until they accept.",
+      "metrics": {
+        "faithfulness": 0.8261,
+        "answer_relevancy": 0.7143,
+        "context_precision": 0.1346,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Do nimbus.* system events count toward quota?",
+      "answer": "Internal `nimbus.*` system events are free and do not count toward quota. Events: tracked product events that land in Nimbus.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces."
+      ],
+      "ground_truth": "Internal nimbus.* system events are free and do not count toward quota.",
+      "metrics": {
+        "faithfulness": 0.7619,
+        "answer_relevancy": 1.0,
+        "context_precision": 0.1875,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "What happens if I exceed events mid-cycle?",
+      "answer": "If you exceed events mid-cycle we do not drop data. Plans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events).\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump."
+      ],
+      "ground_truth": "If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+      "metrics": {
+        "faithfulness": 0.8077,
+        "answer_relevancy": 0.8333,
+        "context_precision": 0.3158,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Which day is seat count taken from on the invoice?",
+      "answer": "Seat count on the invoice is a snapshot from the last day of the billing period. If someone left on day 28 they still appear on that invoice.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nSeat count on the invoice is a snapshot from the last day of the billing period. If someone left on day 28 they still appear on that invoice.",
+        "Delete a project\n\nDeleting a project does not change seat count. It can reduce events on the next invoice if that project was a large share of volume.",
+        "A funnel shows zeros or a sudden drop\n\nData is not sampled on Growth or Scale. Starter samples at 1% after 200k events in a day, which can make a funnel look empty for rare steps. Upgrade or look at a longer range."
+      ],
+      "ground_truth": "Seat count on the invoice is a snapshot from the last day of the billing period.",
+      "metrics": {
+        "faithfulness": 0.7826,
+        "answer_relevancy": 0.6667,
+        "context_precision": 0.1569,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "What is the Growth plan event quota?",
+      "answer": "Open each step and confirm the event name still matches what the SDK sends. Renaming an event in code does not rename historical events.\n\nThat's from \"A funnel shows zeros or a sudden drop\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "A funnel shows zeros or a sudden drop\n\n1. Open each step and confirm the event name still matches what the SDK sends. Renaming an event in code does not rename historical events.\n2. Check filters on the funnel (browser, plan, country). A filter on `plan = pro` hides free users.\n3. Timezone: Nimbus stores UTC. The chart timezone is a display setting. A \"today\" funnel at 01:00 in Manila is still \"yesterday\" in UTC.",
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "Data retention windows\n\nChanging a plan does not rewrite history. If you downgrade from Growth to Starter, events older than 30 days are deleted on the next nightly job. Export first."
+      ],
+      "ground_truth": "Growth includes 10 seats and 10M events.",
+      "metrics": {
+        "faithfulness": 0.8077,
+        "answer_relevancy": 0.25,
+        "context_precision": 0.0595,
+        "context_recall": 0.8333
+      },
+      "error": null
+    },
+    {
+      "question": "What happens if a Nimbus payment fails?",
+      "answer": "As soon as a payment succeeds, writes resume within a few minutes. Update the card under Settings \u2192 Billing.\n\nThat's from \"What happens if a payment fails?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What happens if a payment fails?\n\nUpdate the card under Settings \u2192 Billing. As soon as a payment succeeds, writes resume within a few minutes. We do not charge a reactivation fee.",
+        "What happens if a payment fails?\n\nIf a card is declined we retry on day 3, 7, and 14. You will get email each time.",
+        "What happens if a payment fails?\n\nDuring retries, dashboards stay readable. New event writes pause only after day 14. Existing data is not deleted."
+      ],
+      "ground_truth": "If a card is declined we retry on day 3, 7, and 14. You will get email each time.",
+      "metrics": {
+        "faithfulness": 0.7727,
+        "answer_relevancy": 0.8,
+        "context_precision": 0.2727,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "When do new event writes pause after a declined card?",
+      "answer": "New event writes pause only after day 14. During retries, dashboards stay readable.\n\nThat's from \"What happens if a payment fails?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What happens if a payment fails?\n\nDuring retries, dashboards stay readable. New event writes pause only after day 14. Existing data is not deleted.",
+        "What happens if a payment fails?\n\nIf a card is declined we retry on day 3, 7, and 14. You will get email each time.",
+        "What happens if a payment fails?\n\nUpdate the card under Settings \u2192 Billing. As soon as a payment succeeds, writes resume within a few minutes. We do not charge a reactivation fee."
+      ],
+      "ground_truth": "New event writes pause only after day 14. Existing data is not deleted.",
+      "metrics": {
+        "faithfulness": 0.7727,
+        "answer_relevancy": 0.625,
+        "context_precision": 0.25,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Is there a reactivation fee after I update the card?",
+      "answer": "Update the card under Settings \u2192 Billing. We do not charge a reactivation fee.\n\nThat's from \"What happens if a payment fails?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What happens if a payment fails?\n\nUpdate the card under Settings \u2192 Billing. As soon as a payment succeeds, writes resume within a few minutes. We do not charge a reactivation fee.",
+        "What happens if a payment fails?\n\nIf a card is declined we retry on day 3, 7, and 14. You will get email each time.",
+        "What happens if a payment fails?\n\nDuring retries, dashboards stay readable. New event writes pause only after day 14. Existing data is not deleted."
+      ],
+      "ground_truth": "We do not charge a reactivation fee.",
+      "metrics": {
+        "faithfulness": 0.7368,
+        "answer_relevancy": 0.6667,
+        "context_precision": 0.1136,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Which plans include SSO?",
+      "answer": "After SSO is on, password login is disabled for that workspace. If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first.\n\nThat's from \"Set up Google or Okta SSO\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Set up Google or Okta SSO\n\nAfter SSO is on, password login is disabled for that workspace. If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first. JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers.",
+        "Set up Google or Okta SSO\n\nGo to Settings \u2192 Security \u2192 SSO. Pick Google Workspace or Okta.",
+        "Set up Google or Okta SSO\n\nGoogle: enter your company domain. Users must sign in with that domain. Personal Gmail accounts are rejected.\n \nOkta: create a SAML app with ACS URL and Entity ID shown on that page. Map email to NameID."
+      ],
+      "ground_truth": "SSO is available on Growth and Scale.",
+      "metrics": {
+        "faithfulness": 0.8387,
+        "answer_relevancy": 0.25,
+        "context_precision": 0.0161,
+        "context_recall": 0.25
+      },
+      "error": null
+    },
+    {
+      "question": "How do I stop an SSO login loop?",
+      "answer": "After SSO is on, password login is disabled for that workspace. If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first.\n\nThat's from \"Set up Google or Okta SSO\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Set up Google or Okta SSO\n\nAfter SSO is on, password login is disabled for that workspace. If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first. JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers.",
+        "Set up Google or Okta SSO\n\nGo to Settings \u2192 Security \u2192 SSO. Pick Google Workspace or Okta.",
+        "Set up Google or Okta SSO\n\nGoogle: enter your company domain. Users must sign in with that domain. Personal Gmail accounts are rejected.\n \nOkta: create a SAML app with ACS URL and Entity ID shown on that page. Map email to NameID."
+      ],
+      "ground_truth": "If SSO loops, check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first.",
+      "metrics": {
+        "faithfulness": 0.8387,
+        "answer_relevancy": 0.4,
+        "context_precision": 0.2419,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Is JIT provisioning on by default?",
+      "answer": "JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers. After SSO is on, password login is disabled for that workspace.\n\nThat's from \"Set up Google or Okta SSO\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Set up Google or Okta SSO\n\nAfter SSO is on, password login is disabled for that workspace. If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first. JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers."
+      ],
+      "ground_truth": "JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers.",
+      "metrics": {
+        "faithfulness": 0.8387,
+        "answer_relevancy": 1.0,
+        "context_precision": 0.4359,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Can I use personal Gmail with Google SSO?",
+      "answer": "If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first. After SSO is on, password login is disabled for that workspace.\n\nThat's from \"Set up Google or Okta SSO\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Set up Google or Okta SSO\n\nAfter SSO is on, password login is disabled for that workspace. If SSO loops (you bounce back to Google or Okta), check that the ACS URL has no trailing slash and that the user exists as a Nimbus member first. JIT provisioning is off by default; turn it on only if you want first-time SSO users created as viewers.",
+        "Set up Google or Okta SSO\n\nGoogle: enter your company domain. Users must sign in with that domain. Personal Gmail accounts are rejected.\n \nOkta: create a SAML app with ACS URL and Entity ID shown on that page. Map email to NameID.",
+        "Set up Google or Okta SSO\n\nGo to Settings \u2192 Security \u2192 SSO. Pick Google Workspace or Okta."
+      ],
+      "ground_truth": "Personal Gmail accounts are rejected.",
+      "metrics": {
+        "faithfulness": 0.8387,
+        "answer_relevancy": 0.4,
+        "context_precision": 0.0645,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "What is the difference between project write keys and workspace read keys?",
+      "answer": "Rate limits: 100 requests / second per write key, 10 / second per read key. Keys created before March 2025 share a workspace-wide 50 rps cap; create a new key to get the current limits.\n\nThat's from \"API keys and rate limits\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "API keys and rate limits\n\nRate limits: 100 requests / second per write key, 10 / second per read key. Burst above that returns HTTP 429 with Retry-After. Keys created before March 2025 share a workspace-wide 50 rps cap; create a new key to get the current limits.",
+        "API keys and rate limits\n\nProject write key: used by the JS snippet and server SDKs to send events. It can only write. Rotate it from Project \u2192 API.",
+        "API keys and rate limits\n\nWorkspace read key: used for the query API and CSV exports. It cannot ingest events. Treat it like a password."
+      ],
+      "ground_truth": "Project write keys send events. Workspace read keys query data and cannot ingest events.",
+      "metrics": {
+        "faithfulness": 0.8125,
+        "answer_relevancy": 0.5714,
+        "context_precision": 0.1887,
+        "context_recall": 0.9091
+      },
+      "error": null
+    },
+    {
+      "question": "What HTTP status is returned when I burst past the rate limit?",
+      "answer": "Burst above that returns HTTP 429 with Retry-After. Rate limits: 100 requests / second per write key, 10 / second per read key.\n\nThat's from \"API keys and rate limits\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "API keys and rate limits\n\nRate limits: 100 requests / second per write key, 10 / second per read key. Burst above that returns HTTP 429 with Retry-After. Keys created before March 2025 share a workspace-wide 50 rps cap; create a new key to get the current limits.",
+        "API keys and rate limits\n\nProject write key: used by the JS snippet and server SDKs to send events. It can only write. Rotate it from Project \u2192 API.",
+        "API keys and rate limits\n\nWorkspace read key: used for the query API and CSV exports. It cannot ingest events. Treat it like a password."
+      ],
+      "ground_truth": "Burst above that returns HTTP 429 with Retry-After.",
+      "metrics": {
+        "faithfulness": 0.76,
+        "answer_relevancy": 0.4286,
+        "context_precision": 0.1321,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Can I put a workspace read key in frontend code?",
+      "answer": "Create one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API.",
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces."
+      ],
+      "ground_truth": "Never ship a read key in frontend code.",
+      "metrics": {
+        "faithfulness": 0.76,
+        "answer_relevancy": 0.1667,
+        "context_precision": 0.027,
+        "context_recall": 0.1667
+      },
+      "error": null
+    },
+    {
+      "question": "What is the write-key rate limit?",
+      "answer": "Rate limits: 100 requests / second per write key, 10 / second per read key. Keys created before March 2025 share a workspace-wide 50 rps cap; create a new key to get the current limits.\n\nThat's from \"API keys and rate limits\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "API keys and rate limits\n\nRate limits: 100 requests / second per write key, 10 / second per read key. Burst above that returns HTTP 429 with Retry-After. Keys created before March 2025 share a workspace-wide 50 rps cap; create a new key to get the current limits.",
+        "API keys and rate limits\n\nProject write key: used by the JS snippet and server SDKs to send events. It can only write. Rotate it from Project \u2192 API.",
+        "API keys and rate limits\n\nWorkspace read key: used for the query API and CSV exports. It cannot ingest events. Treat it like a password."
+      ],
+      "ground_truth": "100 requests / second per write key.",
+      "metrics": {
+        "faithfulness": 0.8125,
+        "answer_relevancy": 0.75,
+        "context_precision": 0.1132,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "How long does Starter keep raw events?",
+      "answer": "Plans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump."
+      ],
+      "ground_truth": "Starter keeps 30 days. Raw events older than the retention window are deleted on a nightly job around 03:00 UTC.",
+      "metrics": {
+        "faithfulness": 0.8077,
+        "answer_relevancy": 0.4,
+        "context_precision": 0.0526,
+        "context_recall": 0.1765
+      },
+      "error": null
+    },
+    {
+      "question": "What happens to old events if I downgrade from Growth to Starter?",
+      "answer": "Plans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump."
+      ],
+      "ground_truth": "If you downgrade from Growth to Starter, events older than 30 days are deleted on the next nightly job. Export first.",
+      "metrics": {
+        "faithfulness": 0.8077,
+        "answer_relevancy": 0.5714,
+        "context_precision": 0.1053,
+        "context_recall": 0.4
+      },
+      "error": null
+    },
+    {
+      "question": "What is the CSV export row cap?",
+      "answer": "On any chart click Export CSV. Files under 50 MB download in the browser.\n\nThat's from \"Export a chart or events to CSV\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Export a chart or events to CSV\n\nOn any chart click Export CSV. Files under 50 MB download in the browser. Larger jobs email a signed link to the requester that expires in 24 hours.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump.",
+        "Export a chart or events to CSV\n\nExports include the event name, timestamp (UTC), and properties. They do not include other users' private dashboard names."
+      ],
+      "ground_truth": "CSV exports are capped at 500,000 rows per file.",
+      "metrics": {
+        "faithfulness": 0.7222,
+        "answer_relevancy": 0.5,
+        "context_precision": 0.06,
+        "context_recall": 0.3333
+      },
+      "error": null
+    },
+    {
+      "question": "How long before a teammate invite expires?",
+      "answer": "An invite expires after 7 days. Expired invites do not occupy a seat.\n\nThat's from \"Invite teammates and assign roles\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Invite teammates and assign roles\n\nAn invite expires after 7 days. Expired invites do not occupy a seat. Resend from the same page.",
+        "Invite teammates and assign roles\n\nSettings \u2192 Team \u2192 Invite. Enter email and a role.",
+        "Invite teammates and assign roles\n\nOwner: billing, SSO, delete workspace.\nEditor: create charts, funnels, and keys. Cannot change billing.\nViewer: read dashboards only."
+      ],
+      "ground_truth": "An invite expires after 7 days.",
+      "metrics": {
+        "faithfulness": 0.6667,
+        "answer_relevancy": 0.4,
+        "context_precision": 0.1111,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Do expired invites occupy a seat?",
+      "answer": "Expired invites do not occupy a seat. An invite expires after 7 days.\n\nThat's from \"Invite teammates and assign roles\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Invite teammates and assign roles\n\nAn invite expires after 7 days. Expired invites do not occupy a seat. Resend from the same page.",
+        "How billing works: seats and events\n\nSeats: every person with login access counts, including viewers. Pending invites do not count until they accept.",
+        "How billing works: seats and events\n\nSeat count on the invoice is a snapshot from the last day of the billing period. If someone left on day 28 they still appear on that invoice."
+      ],
+      "ground_truth": "Expired invites do not occupy a seat.",
+      "metrics": {
+        "faithfulness": 0.7778,
+        "answer_relevancy": 1.0,
+        "context_precision": 0.119,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Can I demote the last owner?",
+      "answer": "You cannot demote the last owner. Transfer ownership first.\n\nThat's from \"Invite teammates and assign roles\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Invite teammates and assign roles\n\nYou cannot demote the last owner. Transfer ownership first.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API.",
+        "How billing works: seats and events\n\nSeat count on the invoice is a snapshot from the last day of the billing period. If someone left on day 28 they still appear on that invoice."
+      ],
+      "ground_truth": "You cannot demote the last owner. Transfer ownership first.",
+      "metrics": {
+        "faithfulness": 0.7059,
+        "answer_relevancy": 1.0,
+        "context_precision": 0.1795,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "What can a viewer do?",
+      "answer": "Viewer: read dashboards only. Owner: billing, SSO, delete workspace.\n\nThat's from \"Invite teammates and assign roles\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Invite teammates and assign roles\n\nOwner: billing, SSO, delete workspace.\nEditor: create charts, funnels, and keys. Cannot change billing.\nViewer: read dashboards only."
+      ],
+      "ground_truth": "Viewer: read dashboards only.",
+      "metrics": {
+        "faithfulness": 0.6842,
+        "answer_relevancy": 0.5,
+        "context_precision": 0.2,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Why does my funnel show zeros?",
+      "answer": "Check filters on the funnel (browser, plan, country). A \"today\" funnel at 01:00 in Manila is still \"yesterday\" in UTC.\n\nThat's from \"A funnel shows zeros or a sudden drop\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "A funnel shows zeros or a sudden drop\n\n1. Open each step and confirm the event name still matches what the SDK sends. Renaming an event in code does not rename historical events.\n2. Check filters on the funnel (browser, plan, country). A filter on `plan = pro` hides free users.\n3. Timezone: Nimbus stores UTC. The chart timezone is a display setting. A \"today\" funnel at 01:00 in Manila is still \"yesterday\" in UTC.",
+        "A funnel shows zeros or a sudden drop\n\nIf a funnel that used to work now shows zero:",
+        "A funnel shows zeros or a sudden drop\n\nData is not sampled on Growth or Scale. Starter samples at 1% after 200k events in a day, which can make a funnel look empty for rare steps. Upgrade or look at a longer range."
+      ],
+      "ground_truth": "Usually a renamed event, a filter, or timezone, not lost data.",
+      "metrics": {
+        "faithfulness": 0.7917,
+        "answer_relevancy": 0.4,
+        "context_precision": 0.0606,
+        "context_recall": 0.5714
+      },
+      "error": null
+    },
+    {
+      "question": "Does renaming an event in code rename historical events?",
+      "answer": "Plans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "A funnel shows zeros or a sudden drop\n\n1. Open each step and confirm the event name still matches what the SDK sends. Renaming an event in code does not rename historical events.\n2. Check filters on the funnel (browser, plan, country). A filter on `plan = pro` hides free users.\n3. Timezone: Nimbus stores UTC. The chart timezone is a display setting. A \"today\" funnel at 01:00 in Manila is still \"yesterday\" in UTC."
+      ],
+      "ground_truth": "Renaming an event in code does not rename historical events.",
+      "metrics": {
+        "faithfulness": 0.8077,
+        "answer_relevancy": 0.1667,
+        "context_precision": 0.0779,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Does Starter sample events?",
+      "answer": "Plans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data.\n\nThat's from \"How billing works: seats and events\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "How billing works: seats and events\n\nPlans: Starter (3 seats, 1M events), Growth (10 seats, 10M events), Scale (unlimited seats, custom events). If you exceed events mid-cycle we do not drop data. We invoice the overage on the next statement at $0.00012 per extra event.",
+        "How billing works: seats and events\n\nEvents: tracked product events that land in Nimbus. Internal `nimbus.*` system events are free and do not count toward quota.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump."
+      ],
+      "ground_truth": "Starter samples at 1% after 200k events in a day.",
+      "metrics": {
+        "faithfulness": 0.8077,
+        "answer_relevancy": 0.6667,
+        "context_precision": 0.0526,
+        "context_recall": 0.4286
+      },
+      "error": null
+    },
+    {
+      "question": "When does Export CSV email a link instead of downloading?",
+      "answer": "On any chart click Export CSV. Larger jobs email a signed link to the requester that expires in 24 hours.\n\nThat's from \"Export a chart or events to CSV\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Export a chart or events to CSV\n\nOn any chart click Export CSV. Files under 50 MB download in the browser. Larger jobs email a signed link to the requester that expires in 24 hours.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump.",
+        "Export a chart or events to CSV\n\nExports include the event name, timestamp (UTC), and properties. They do not include other users' private dashboard names."
+      ],
+      "ground_truth": "Files under 50 MB download in the browser. Larger jobs email a signed link to the requester that expires in 24 hours.",
+      "metrics": {
+        "faithfulness": 0.7619,
+        "answer_relevancy": 0.6667,
+        "context_precision": 0.3,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "How long until the signed export link expires?",
+      "answer": "Larger jobs email a signed link to the requester that expires in 24 hours. On any chart click Export CSV.\n\nThat's from \"Export a chart or events to CSV\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Export a chart or events to CSV\n\nOn any chart click Export CSV. Files under 50 MB download in the browser. Larger jobs email a signed link to the requester that expires in 24 hours.",
+        "Export a chart or events to CSV\n\nThe Events explorer can export raw rows with the same cap. Use a workspace read key and the query API if you need a recurring dump.",
+        "Export a chart or events to CSV\n\nExports include the event name, timestamp (UTC), and properties. They do not include other users' private dashboard names."
+      ],
+      "ground_truth": "The signed link expires in 24 hours.",
+      "metrics": {
+        "faithfulness": 0.7619,
+        "answer_relevancy": 0.6667,
+        "context_precision": 0.1,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "How long is a deleted project in the recycle bin?",
+      "answer": "Project settings \u2192 Danger \u2192 Move to recycle bin. The project disappears from the sidebar immediately.\n\nThat's from \"Delete a project\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Delete a project\n\nProject settings \u2192 Danger \u2192 Move to recycle bin. The project disappears from the sidebar immediately. Events stop ingesting.",
+        "Delete a project\n\nFor 7 days an owner can restore it from Settings \u2192 Recycle bin. After that, events and charts are deleted and the project ID is never reused.",
+        "Delete a project\n\nDeleting a project does not change seat count. It can reduce events on the next invoice if that project was a large share of volume."
+      ],
+      "ground_truth": "For 7 days an owner can restore it from Settings \u2192 Recycle bin.",
+      "metrics": {
+        "faithfulness": 0.6875,
+        "answer_relevancy": 0.6,
+        "context_precision": 0.2059,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Does deleting a project change seat count?",
+      "answer": "Deleting a project does not change seat count. It can reduce events on the next invoice if that project was a large share of volume.\n\nThat's from \"Delete a project\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Delete a project\n\nDeleting a project does not change seat count. It can reduce events on the next invoice if that project was a large share of volume.",
+        "Delete a project\n\nProject settings \u2192 Danger \u2192 Move to recycle bin. The project disappears from the sidebar immediately. Events stop ingesting.",
+        "Delete a project\n\nFor 7 days an owner can restore it from Settings \u2192 Recycle bin. After that, events and charts are deleted and the project ID is never reused."
+      ],
+      "ground_truth": "Deleting a project does not change seat count.",
+      "metrics": {
+        "faithfulness": 0.75,
+        "answer_relevancy": 1.0,
+        "context_precision": 0.1471,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "Is the project ID reused after deletion?",
+      "answer": "After that, events and charts are deleted and the project ID is never reused. For 7 days an owner can restore it from Settings \u2192 Recycle bin.\n\nThat's from \"Delete a project\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Delete a project\n\nFor 7 days an owner can restore it from Settings \u2192 Recycle bin. After that, events and charts are deleted and the project ID is never reused.",
+        "Delete a project\n\nProject settings \u2192 Danger \u2192 Move to recycle bin. The project disappears from the sidebar immediately. Events stop ingesting.",
+        "Delete a project\n\nDeleting a project does not change seat count. It can reduce events on the next invoice if that project was a large share of volume."
+      ],
+      "ground_truth": "After that, events and charts are deleted and the project ID is never reused.",
+      "metrics": {
+        "faithfulness": 0.7727,
+        "answer_relevancy": 0.8,
+        "context_precision": 0.2353,
+        "context_recall": 1.0
+      },
+      "error": null
+    },
+    {
+      "question": "How do I connect Nimbus to Salesforce?",
+      "answer": "A Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API."
+      ],
+      "ground_truth": "I don't have that in the Nimbus help center.",
+      "metrics": {
+        "faithfulness": 0.6471,
+        "answer_relevancy": 0.25,
+        "context_precision": 0.027,
+        "context_recall": 0.25
+      },
+      "error": null
+    },
+    {
+      "question": "Where do I download your SOC 2 report?",
+      "answer": "Files under 50 MB download in the browser. On any chart click Export CSV.\n\nThat's from \"Export a chart or events to CSV\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "Export a chart or events to CSV\n\nOn any chart click Export CSV. Files under 50 MB download in the browser. Larger jobs email a signed link to the requester that expires in 24 hours."
+      ],
+      "ground_truth": "I don't have that in the Nimbus help center.",
+      "metrics": {
+        "faithfulness": 0.6667,
+        "answer_relevancy": 0.2,
+        "context_precision": 0.0,
+        "context_recall": 0.0
+      },
+      "error": null
+    },
+    {
+      "question": "Can I pay for Nimbus with crypto?",
+      "answer": "A Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API."
+      ],
+      "ground_truth": "I don't have that in the Nimbus help center.",
+      "metrics": {
+        "faithfulness": 0.6471,
+        "answer_relevancy": 0.3333,
+        "context_precision": 0.027,
+        "context_recall": 0.25
+      },
+      "error": null
+    },
+    {
+      "question": "Does Nimbus have an iOS app?",
+      "answer": "A Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.\n\nThat's from \"What is a Nimbus workspace?\". If this isn't the case you're in, talk to a person.",
+      "retrieved_contexts": [
+        "What is a Nimbus workspace?\n\nA Nimbus workspace holds your projects, teammates, and bill. Event data never crosses workspaces.",
+        "What is a Nimbus workspace?\n\nCreate one workspace per company. Agencies that run analytics for several clients should create one workspace per client so invoices and retention settings stay separate.",
+        "What is a Nimbus workspace?\n\nThe owner can rename a workspace from Settings \u2192 General. Changing the name does not change the workspace ID used in the API."
+      ],
+      "ground_truth": "I don't have that in the Nimbus help center.",
+      "metrics": {
+        "faithfulness": 0.6471,
+        "answer_relevancy": 0.3333,
+        "context_precision": 0.027,
+        "context_recall": 0.25
+      },
+      "error": null
+    }
+  ]
+}

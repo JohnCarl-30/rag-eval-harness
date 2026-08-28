@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from rag_eval_harness.store.repo import Store
+from rag_eval_harness.types import RowScore
 
 DEFAULT_THRESHOLD = 0.05
 
@@ -86,6 +87,73 @@ def _means_from_payload(payload: dict[str, Any]) -> dict[str, float]:
     if not isinstance(means, dict):
         raise ValueError("Baseline/head JSON must contain a means object")
     return {str(key): float(value) for key, value in means.items() if key != "rows"}
+
+
+@dataclass
+class RowMetricDelta:
+    index: int
+    question: str
+    metric: str
+    baseline: float
+    head: float
+    drop: float
+
+
+def load_rows_ref(ref: str, store: Store | None = None) -> tuple[str, list[RowScore]]:
+    path = Path(ref)
+    if path.is_file():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"{ref} must be a JSON object")
+        raw_rows = payload.get("rows")
+        if not isinstance(raw_rows, list):
+            raise ValueError(
+                f"{ref} has no per-row scores; pass a run id or a snapshot from rag-eval eval -o"
+            )
+        return ref, [RowScore.from_dict(item) for item in raw_rows if isinstance(item, dict)]
+    if store is None:
+        raise ValueError(f"{ref} is not a file and no store was provided to look up a run id")
+    run = store.get_run(ref)
+    if run is None:
+        raise KeyError(f"Run not found: {ref}")
+    return ref, store.get_run_scores(ref)
+
+
+def worst_row_drops(
+    baseline: list[RowScore],
+    head: list[RowScore],
+    *,
+    metric: str | None = None,
+    limit: int = 8,
+) -> list[RowMetricDelta]:
+    n = min(len(baseline), len(head))
+    drops: list[RowMetricDelta] = []
+    for index in range(n):
+        left = baseline[index]
+        right = head[index]
+        names = [metric] if metric else sorted(set(left.metrics) | set(right.metrics))
+        for name in names:
+            if not name:
+                continue
+            if name not in left.metrics or name not in right.metrics:
+                continue
+            base_value = float(left.metrics[name])
+            head_value = float(right.metrics[name])
+            drop = round(base_value - head_value, 6)
+            if drop <= 0:
+                continue
+            drops.append(
+                RowMetricDelta(
+                    index=index,
+                    question=right.question or left.question,
+                    metric=name,
+                    baseline=base_value,
+                    head=head_value,
+                    drop=drop,
+                )
+            )
+    drops.sort(key=lambda item: item.drop, reverse=True)
+    return drops[:limit]
 
 
 def load_means_ref(ref: str, store: Store | None = None) -> tuple[str, dict[str, float]]:

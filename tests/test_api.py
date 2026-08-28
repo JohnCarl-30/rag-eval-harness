@@ -18,7 +18,7 @@ def test_loopback_open_and_run_lifecycle(store: Store, traces_jsonl) -> None:
     )
     assert upload.status_code == 200, upload.text
     dataset_id = upload.json()["id"]
-    assert upload.json()["row_count"] == 15
+    assert upload.json()["row_count"] == 16
 
     created = client.post(
         "/api/runs",
@@ -34,15 +34,17 @@ def test_loopback_open_and_run_lifecycle(store: Store, traces_jsonl) -> None:
     # Force a follow-up poll; TestClient executes background tasks before returning
     assert detail.json()["status"] == "completed"
     assert "faithfulness" in (detail.json()["means"] or {})
-    assert len(detail.json()["rows"]) == 15
+    assert len(detail.json()["rows"]) == 16
 
     tagged = client.post(f"/api/runs/{run_id}/baseline")
     assert tagged.json()["is_baseline"] is True
 
     other = client.post(
         "/api/runs",
-        json={"dataset_id": dataset_id, "adapter": "traces", "evaluator": "stub"},
+        json={"dataset_id": dataset_id, "adapter": "traces", "evaluator": "lexical"},
     )
+    assert other.status_code == 200, other.text
+    assert other.json()["evaluator"] == "lexical"
     diff = client.get(f"/api/runs/{other.json()['id']}/diff", params={"against": run_id})
     assert diff.status_code == 200
     assert "deltas" in diff.json()
@@ -81,4 +83,4 @@ def test_http_run_with_dummy_handler(store: Store, golden_csv) -> None:
     run, summary = eval_from_path(store, golden_csv, evaluator="stub")
     # golden csv has no answers → traces adapter should record row errors
     assert run.status == "completed"
-    assert summary.error_count == 15
+    assert summary.error_count == 16

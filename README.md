@@ -1,8 +1,12 @@
 # rag-eval-harness
 
+[![CI](https://github.com/JohnCarl-30/rag-eval-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnCarl-30/rag-eval-harness/actions/workflows/ci.yml)
+
 RAGAS with a memory and a diff view.
 
 **What this proved:** a weaker retriever on a 40-question Nimbus help-center set cut mean **context recall from 0.880 to 0.740**. `rag-eval regress --threshold 0.05` exited **1**. Full write-up: [Nimbus case study](docs/nimbus-case-study.md). 90-second recording: `./scripts/demo.sh`.
+
+Chunking the same corpus doubled lexical precision and failed the recall gate. Production stayed on whole articles. [Chunking case study](docs/nimbus-chunking.md). `./scripts/demo-chunking.sh`.
 
 Upload a golden RAG dataset, run a pipeline (precomputed traces or HTTP), score with **RAGAS**, **lexical** overlap, or a keyless **stub** evaluator, persist runs, and fail CI when mean metrics drop versus a tagged baseline.
 
@@ -15,17 +19,16 @@ Requires Python 3.11+ ([uv](https://docs.astral.sh/uv/) recommended) and, for th
 ```bash
 git clone https://github.com/JohnCarl-30/rag-eval-harness.git && cd rag-eval-harness
 uv sync
+./scripts/demo.sh
 ```
 
-Score the bundled traces (no API key, no network):
+You should see `context_recall` FAIL (0.880 → 0.740) and the script exit 0. That red `rag-eval regress` is the product. No API key. Then score dummy traces if you want a green run:
 
 ```bash
 uv run rag-eval eval examples/dummy-rag/traces.jsonl --evaluator stub -o /tmp/rag-eval-head.json
 ```
 
-You should see a run id and means for faithfulness, answer relevancy, context precision, and context recall.
-
-Optional — call a live HTTP SUT (the canned FAQ server):
+Optional. Call a live HTTP SUT (the canned FAQ server):
 
 ```bash
 python3 examples/dummy-rag/server.py --port 8080 &
@@ -63,10 +66,11 @@ rag-eval eval traces.jsonl --evaluator stub
 rag-eval eval golden.csv --sut-url https://your-rag.example/query --sut-token "$TOKEN"
 rag-eval baseline <run-id>
 rag-eval regress --baseline <run-id-or.json> --head <run-id-or.json> --threshold 0.05
+rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json>
 rag-eval serve
 ```
 
-`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`).
+`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`). `diff` prints the same means plus the worst per-row drops and always exits 0 on a successful compare.
 
 ## Contracts
 
@@ -75,28 +79,28 @@ rag-eval serve
 | Columns | `question` required. Optional `ground_truth`. Traces also need `answer` and `retrieved_contexts` (JSON list or `\|` / newline delimited). Aliases: `user_input`, `reference`, `response`, `contexts`. |
 | HTTP SUT | `POST {"question"}` → `{"answer","retrieved_contexts"}`. Optional bearer. Per-row timeout; a failed row is an error, the run continues. |
 | Metrics | Always faithfulness + answer relevancy. Context precision + context recall when `ground_truth` is present. |
-| Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context — use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
+| Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context, use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
 | Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. |
 | Regression | Tag a run as baseline. Gate on **mean** delta. Per-row diffs are UI-only. |
 
-Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [storage](docs/storage.md) · [Nimbus case study](docs/nimbus-case-study.md)
+Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [storage](docs/storage.md) · [Nimbus case study](docs/nimbus-case-study.md) · [Chunking case study](docs/nimbus-chunking.md) · [Cost and p95](docs/nimbus-cost.md) · [Lexical vs judge](docs/nimbus-judge.md)
 
 ## GitHub Action
 
-After this repo is on GitHub:
+`stub` is keyless CI smoke. Hashes look healthy on junk contexts. Use `lexical` for a real gate.
 
 ```yaml
 - uses: JohnCarl-30/rag-eval-harness@v0.1.0
   with:
     traces: tests/golden/traces.jsonl
-    evaluator: stub
+    evaluator: lexical
     baseline: tests/golden/baseline.json
     threshold: "0.05"
 ```
 
-See [docs/ci.md](docs/ci.md).
+Public consumer: [Relaydesk](https://github.com/JohnCarl-30/relaydesk) fails PRs when Nimbus recall drops. See [docs/ci.md](docs/ci.md).
 
 ## Development
 

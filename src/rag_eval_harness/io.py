@@ -103,7 +103,7 @@ def load_json_text(text: str) -> list[EvalRow]:
     if isinstance(payload, dict) and "rows" in payload:
         payload = payload["rows"]
     if not isinstance(payload, list):
-        raise LoadError("JSON input must be a list of objects or {\"rows\": [...]}.")
+        raise LoadError('JSON input must be a list of objects or {"rows": [...]}.')
     records: list[dict[str, Any]] = []
     for item in payload:
         if not isinstance(item, dict):

@@ -61,3 +61,21 @@ def test_load_means_from_file_and_run(store: Store, tmp_path) -> None:
     )
     _, run_means = load_means_ref(run.id, store)
     assert run_means["faithfulness"] == pytest.approx(0.42)
+
+
+def test_worst_row_drops_ranks_the_largest_fall() -> None:
+    from rag_eval_harness.regression.compare import worst_row_drops
+    from rag_eval_harness.types import RowScore
+
+    baseline = [
+        RowScore("q0", "a", [], None, {"faithfulness": 0.9}),
+        RowScore("q1", "a", [], None, {"faithfulness": 0.8}),
+    ]
+    head = [
+        RowScore("q0", "a", [], None, {"faithfulness": 0.85}),
+        RowScore("q1", "a", [], None, {"faithfulness": 0.2}),
+    ]
+    drops = worst_row_drops(baseline, head, metric="faithfulness", limit=2)
+    assert drops[0].index == 1
+    assert drops[0].drop == pytest.approx(0.6)
+    assert drops[1].index == 0

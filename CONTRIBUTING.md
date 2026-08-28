@@ -15,10 +15,10 @@ cd web && npm install && npm run build
 
 ## Layout
 
-- `src/rag_eval_harness` — library, CLI, FastAPI
-- `web/` — Vite + React
-- `examples/dummy-rag` — canned HTTP SUT + 15-row fixture
-- `tests/` — pytest (no network; RAGAS mocked; stub evaluator)
+- `src/rag_eval_harness`: library, CLI, FastAPI
+- `web/`: Vite + React
+- `examples/dummy-rag`: canned HTTP SUT + 16-row fixture
+- `tests/`: pytest (no network; RAGAS mocked; stub evaluator)
 
 ## PR checklist
 

@@ -11,7 +11,13 @@ from dotenv import load_dotenv
 from rag_eval_harness import __version__
 from rag_eval_harness.config import get_settings
 from rag_eval_harness.engine import eval_from_path
-from rag_eval_harness.regression.compare import DEFAULT_THRESHOLD, compare_means, load_means_ref
+from rag_eval_harness.regression.compare import (
+    DEFAULT_THRESHOLD,
+    compare_means,
+    load_means_ref,
+    load_rows_ref,
+    worst_row_drops,
+)
 from rag_eval_harness.store.repo import Store
 
 load_dotenv()
@@ -67,7 +73,6 @@ def _root(
     ] = False,
 ) -> None:
     return
-
 
 
 @app.command()
@@ -202,6 +207,68 @@ def regress(
         typer.echo("Regression detected.", err=True)
         raise typer.Exit(1)
     typer.echo("No regression.")
+
+
+@app.command()
+def diff(
+    baseline_ref: Annotated[
+        str,
+        typer.Option("--baseline", help="Baseline run id or JSON snapshot path."),
+    ],
+    head_ref: Annotated[
+        str,
+        typer.Option("--head", help="Head run id or JSON snapshot path."),
+    ],
+    metric: Annotated[
+        str | None,
+        typer.Option("--metric", help="Only rank drops for this metric name."),
+    ] = None,
+    limit: Annotated[int, typer.Option("--limit", help="How many per-row drops to print.")] = 8,
+    threshold: Annotated[
+        float,
+        typer.Option("--threshold", help="Shown on the mean table. This command does not fail CI."),
+    ] = DEFAULT_THRESHOLD,
+    db: DbOption = None,
+) -> None:
+    """Print mean deltas and the worst per-row drops. Use regress to fail CI."""
+    store = _store(db)
+    try:
+        b_ref, b_means = load_means_ref(baseline_ref, store)
+        h_ref, h_means = load_means_ref(head_ref, store)
+        _, b_rows = load_rows_ref(baseline_ref, store)
+        _, h_rows = load_rows_ref(head_ref, store)
+    except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(2) from exc
+    report = compare_means(
+        b_means,
+        h_means,
+        threshold=threshold,
+        baseline_ref=b_ref,
+        head_ref=h_ref,
+    )
+    typer.echo(f"threshold: {report.threshold}")
+    typer.echo(f"baseline:  {report.baseline_ref}")
+    typer.echo(f"head:      {report.head_ref}")
+    for item in report.deltas:
+        flag = "FAIL" if item.dropped else "ok"
+        typer.echo(
+            f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
+            f"delta={item.delta:+.4f}  {flag}"
+        )
+    drops = worst_row_drops(b_rows, h_rows, metric=metric, limit=limit)
+    if not drops:
+        typer.echo("No per-row drops.")
+        return
+    typer.echo("Worst per-row drops:")
+    for item in drops:
+        question = item.question.replace("\n", " ").strip()
+        if len(question) > 80:
+            question = question[:77] + "..."
+        typer.echo(
+            f"  [{item.index}] {item.metric}  {item.baseline:.4f} -> {item.head:.4f}  "
+            f"({item.drop:+.4f})  {question}"
+        )
 
 
 @app.command("runs")

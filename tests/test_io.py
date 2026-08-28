@@ -59,8 +59,22 @@ def test_missing_question_column() -> None:
 def test_nimbus_golden_loads_under_cap() -> None:
     from pathlib import Path
 
-    path = Path(__file__).resolve().parents[1] / "examples" / "nimbus" / "golden.csv"
+    root = Path(__file__).resolve().parents[1]
+    path = root / "examples" / "nimbus" / "golden.csv"
     rows = load_path(path)
-    assert 30 <= len(rows) <= 100
+    assert 50 <= len(rows) <= 100
     assert all(row.question for row in rows)
     assert sum(1 for row in rows if row.has_ground_truth()) == len(rows)
+    reasons = (root / "examples" / "nimbus" / "reasons.md").read_text(encoding="utf-8")
+    assert "multilingual" in reasons
+    assert "docs-gap" in reasons
+
+
+def test_nimbus_slice15_loads() -> None:
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    rows = load_path(root / "examples" / "nimbus" / "slice-15.jsonl")
+    assert len(rows) == 15
+    assert all(row.question and row.answer and row.retrieved_contexts for row in rows)
+    assert sum(1 for row in rows if row.has_ground_truth()) == 15

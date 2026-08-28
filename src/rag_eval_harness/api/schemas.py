@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class CreateRunRequest(BaseModel):
     dataset_id: str
     adapter: Literal["traces", "http"] = "traces"
-    evaluator: Literal["stub", "ragas"] = "stub"
+    evaluator: Literal["stub", "lexical", "ragas"] = "stub"
     sut_url: str | None = None
     sut_token: str | None = None
     timeout_seconds: float = Field(default=30.0, gt=0, le=300)

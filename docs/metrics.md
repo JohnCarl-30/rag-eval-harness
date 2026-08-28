@@ -4,8 +4,8 @@
 
 Always computed:
 
-- **faithfulness** — is the answer supported by retrieved context?
-- **answer_relevancy** — does the answer address the question?
+- faithfulness: is the answer supported by retrieved context?
+- answer_relevancy: does the answer address the question?
 
 When any row has `ground_truth` / `reference`:
 
@@ -24,7 +24,9 @@ rag-eval eval traces.jsonl --evaluator stub
 
 ## Lexical evaluator
 
-Token overlap. No judge key. Faithfulness is answer tokens found in retrieved context; context recall is ground-truth tokens found in context. Use this when you need a gate that actually moves when retrieval gets worse (see [Nimbus case study](nimbus-case-study.md)).
+Token overlap. No judge key. Faithfulness is answer tokens found in retrieved context; context recall is ground-truth tokens found in context. Use this when you need a gate that actually moves when retrieval gets worse (see [Nimbus case study](nimbus-case-study.md) and [chunking](nimbus-chunking.md)).
+
+On the 40-row Nimbus snapshot, lexical scoring is **1.6 ms** total. Stub is faster and reports a fake-healthy precision. RAGAS needs a key. Keep lexical as the PR evaluator. Numbers: [nimbus-cost.md](nimbus-cost.md). When overlap and a judge fight: [nimbus-judge.md](nimbus-judge.md).
 
 ```bash
 rag-eval eval golden.csv --sut-url http://127.0.0.1:3000/api/eval --evaluator lexical
@@ -48,11 +50,12 @@ A live-judge test is skipped unless `OPENAI_API_KEY` is set. Unit tests inject f
 
 ## Regression gate
 
-Means only. Per-row diffs belong in the UI.
+Means only. Per-row diffs are in the UI and `rag-eval diff`. `regress` is the CI gate.
 
 ```bash
 rag-eval baseline <run-id>
 rag-eval regress --baseline <run-id-or.json> --head <run-id-or.json> --threshold 0.05
+rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json> --metric context_recall
 ```
 
 Exit `1` if any baseline mean minus head mean is **greater than** `--threshold`. A missing head metric is treated as `0.0`.

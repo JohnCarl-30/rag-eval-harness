@@ -19,6 +19,8 @@ jobs:
         run: uv run ruff check src tests
       - name: Pytest
         run: uv run pytest -q
+      - name: Nimbus gate stays red
+        run: ./scripts/demo.sh
       - name: Consumer action (stub eval)
         uses: ./
         with:

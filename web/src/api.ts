@@ -102,7 +102,7 @@ export const api = {
   createRun: (payload: {
     dataset_id: string;
     adapter: "traces" | "http";
-    evaluator: "stub" | "ragas";
+    evaluator: "stub" | "lexical" | "ragas";
     sut_url?: string;
     sut_token?: string;
     timeout_seconds?: number;

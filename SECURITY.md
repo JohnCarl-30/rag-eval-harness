@@ -16,7 +16,7 @@ Email **johncarlsantos30@gmail.com** with:
 - steps to reproduce
 - impact (for example: unauthenticated access when `RAG_EVAL_API_KEY` is required)
 
-You should receive an acknowledgement within 7 days. After this repository is on GitHub, prefer GitHub private vulnerability reporting.
+You should receive an acknowledgement within 7 days. Prefer GitHub private vulnerability reporting on this repository's Security tab.
 
 ## Notes for operators
 

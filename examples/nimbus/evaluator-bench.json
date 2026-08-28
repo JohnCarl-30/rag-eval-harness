@@ -1,0 +1,76 @@
+{
+  "source": "examples/nimbus/baseline.json",
+  "stub_40": {
+    "evaluator": "stub",
+    "n": 40,
+    "wall_ms": 0.6,
+    "ms_per_row": 0.01,
+    "error_count": 0,
+    "means": {
+      "faithfulness": 0.7367,
+      "answer_relevancy": 0.7357,
+      "context_precision": 0.7515,
+      "context_recall": 0.7824
+    }
+  },
+  "lexical_40": {
+    "evaluator": "lexical",
+    "n": 40,
+    "wall_ms": 1.8,
+    "ms_per_row": 0.05,
+    "error_count": 0,
+    "means": {
+      "faithfulness": 0.7772,
+      "answer_relevancy": 0.6381,
+      "context_precision": 0.0634,
+      "context_recall": 0.8799
+    }
+  },
+  "stub_10": {
+    "evaluator": "stub",
+    "n": 10,
+    "wall_ms": 0.1,
+    "ms_per_row": 0.01,
+    "error_count": 0,
+    "means": {
+      "faithfulness": 0.7368,
+      "answer_relevancy": 0.779,
+      "context_precision": 0.6979,
+      "context_recall": 0.7415
+    }
+  },
+  "lexical_10": {
+    "evaluator": "lexical",
+    "n": 10,
+    "wall_ms": 0.4,
+    "ms_per_row": 0.04,
+    "error_count": 0,
+    "means": {
+      "faithfulness": 0.7976,
+      "answer_relevancy": 0.7302,
+      "context_precision": 0.0674,
+      "context_recall": 0.9611
+    }
+  },
+  "ragas_10_estimate": {
+    "n": 10,
+    "input_tokens": 24215,
+    "output_tokens": 3200,
+    "embed_tokens": 400,
+    "usd_estimate": 0.00556,
+    "usd_per_row": 0.000556,
+    "note": "floor from context size; live RAGAS is often higher because faithfulness splits statements"
+  },
+  "ragas_40_estimate": {
+    "n": 40,
+    "input_tokens": 88550,
+    "output_tokens": 12800,
+    "embed_tokens": 1596,
+    "usd_estimate": 0.020994,
+    "usd_per_row": 0.000525,
+    "note": "floor from context size; live RAGAS is often higher because faithfulness splits statements"
+  },
+  "ragas_10_live": {
+    "skipped": "OPENAI_API_KEY unset"
+  }
+}

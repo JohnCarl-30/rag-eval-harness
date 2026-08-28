@@ -77,6 +77,38 @@ def test_baseline_and_regress_exit_codes(tmp_path, traces_jsonl, store) -> None:
     assert "Regression detected" in failed.output
 
 
+def test_diff_lists_worst_row_drops(tmp_path, traces_jsonl, store) -> None:
+    db_url = store.url
+    run, summary = eval_from_path(store, traces_jsonl, evaluator="stub", label="base")
+    base = tmp_path / "base.json"
+    head = tmp_path / "head.json"
+    base.write_text(
+        json.dumps({"means": run.means, "rows": [row.to_dict() for row in summary.rows]}),
+        encoding="utf-8",
+    )
+    worse_rows = []
+    for row in summary.rows:
+        payload = row.to_dict()
+        payload["metrics"] = {name: max(0.0, value - 0.2) for name, value in row.metrics.items()}
+        worse_rows.append(payload)
+    head.write_text(
+        json.dumps(
+            {
+                "means": {name: max(0.0, value - 0.2) for name, value in (run.means or {}).items()},
+                "rows": worse_rows,
+            }
+        ),
+        encoding="utf-8",
+    )
+    result = runner.invoke(
+        app,
+        ["diff", "--baseline", str(base), "--head", str(head), "--limit", "3", "--db", db_url],
+    )
+    assert result.exit_code == 0, result.output
+    assert "Worst per-row drops:" in result.output
+    assert "faithfulness" in result.output
+
+
 def test_version() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0

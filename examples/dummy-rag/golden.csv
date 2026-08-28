@@ -14,3 +14,4 @@ question,ground_truth
 "How do I contact support?","Open a ticket in #docs-help or email support@acme.example"
 "How often does the corpus reindex?","Every 6 hours, with manual reindex for admins"
 "What languages does the assistant support?","Answers in English; uploaded docs may be English or Spanish"
+"¿Cómo contacto a soporte?","Abre un ticket en #docs-help o escribe a support@acme.example."

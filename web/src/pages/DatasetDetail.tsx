@@ -8,7 +8,7 @@ export default function DatasetDetailPage() {
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [rows, setRows] = useState<Array<{ question: string; ground_truth: string | null }>>([]);
   const [adapter, setAdapter] = useState<"traces" | "http">("traces");
-  const [evaluator, setEvaluator] = useState<"stub" | "ragas">("stub");
+  const [evaluator, setEvaluator] = useState<"stub" | "lexical" | "ragas">("stub");
   const [sutUrl, setSutUrl] = useState("http://127.0.0.1:8080/query");
   const [sutToken, setSutToken] = useState("");
   const [label, setLabel] = useState("");
@@ -73,9 +73,12 @@ export default function DatasetDetailPage() {
           <select
             className="mt-1 block w-full border border-rule bg-paper px-2 py-1"
             value={evaluator}
-            onChange={(event) => setEvaluator(event.target.value as "stub" | "ragas")}
+            onChange={(event) =>
+              setEvaluator(event.target.value as "stub" | "lexical" | "ragas")
+            }
           >
             <option value="stub">stub (deterministic, no key)</option>
+            <option value="lexical">lexical (token overlap, no key)</option>
             <option value="ragas">ragas (OpenAI-compatible judge)</option>
           </select>
         </label>
