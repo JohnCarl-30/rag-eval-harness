@@ -2,7 +2,9 @@
 
 RAGAS with a memory and a diff view.
 
-Upload a golden RAG dataset, run a pipeline (precomputed traces or HTTP), score with **RAGAS** or a keyless **stub** evaluator, persist runs, and fail CI when mean metrics drop versus a tagged baseline.
+**What this proved:** a weaker retriever on a 40-question Nimbus help-center set cut mean **context recall from 0.880 to 0.740**. `rag-eval regress --threshold 0.05` exited **1**. Full write-up: [Nimbus case study](docs/nimbus-case-study.md). 90-second recording: `./scripts/demo.sh`.
+
+Upload a golden RAG dataset, run a pipeline (precomputed traces or HTTP), score with **RAGAS**, **lexical** overlap, or a keyless **stub** evaluator, persist runs, and fail CI when mean metrics drop versus a tagged baseline.
 
 This is not a RAG framework. There is no ingestion or retrieval stack. Evaluation orchestration is the product.
 

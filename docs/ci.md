@@ -32,7 +32,7 @@ Inputs:
 | `traces` | | Precomputed traces file |
 | `dataset` | | Golden questions; use with `sut-url` |
 | `sut-url` | | HTTP adapter |
-| `evaluator` | `stub` | `stub` or `ragas` |
+| `evaluator` | `stub` | `stub`, `lexical`, or `ragas` |
 | `baseline` | | Run id or JSON snapshot with `means` |
 | `threshold` | `0.05` | Mean drop that fails the job |
 | `output` | `rag-eval-results.json` | Written for artifacts / next baseline |
@@ -58,3 +58,14 @@ On push and pull request:
 3. `docker compose` smoke: API health, dummy-rag, stub eval via HTTP
 
 RAGAS live scoring is not required to merge.
+
+Relaydesk (the support widget) runs its own gate: `eval/golden.csv` against `POST /api/eval`, then `rag-eval regress` vs `eval/baseline.json`. See [nimbus-case-study.md](nimbus-case-study.md).
+
+## PyPI (optional)
+
+`pip install rag-eval-harness` stays a git URL until trusted publishing is on.
+
+1. Create a PyPI account and an empty project named `rag-eval-harness` (or let the first trusted upload create it).
+2. PyPI → Publishing → GitHub → repository `JohnCarl-30/rag-eval-harness`, workflow `release.yml`, environment `pypi`.
+3. In this GitHub repo: Settings → Environments → `pypi` (matches [`.github/workflows/release.yml`](../.github/workflows/release.yml)).
+4. Re-run the `v0.1.0` release workflow, or tag `v0.1.1`.

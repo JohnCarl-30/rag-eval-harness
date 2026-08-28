@@ -48,4 +48,20 @@ uv run rag-eval regress \
 # expected: exit 1, context_recall FAIL
 ```
 
-What we would do next on the product: keep title-boosted top-3 in production; add a CI job on Relaydesk that calls this harness against `/api/eval` and fails the PR if recall drops more than 0.05 vs the committed baseline.
+What we did next on the product: title-boosted top-3 stays in production. Relaydesk CI calls this harness against `/api/eval` and fails the PR if recall drops more than 0.05 vs the committed baseline.
+
+## Record / post
+
+```bash
+./scripts/demo.sh
+```
+
+That command is the 90-second clip: means print, `context_recall FAIL`, exit 1.
+
+Copy for LinkedIn (edit the first line if you want):
+
+> I gated a support bot on retrieval quality, not vibes.
+> 40 Nimbus help-center questions. Weakening the retriever (top-1, no title boost) cut mean context recall 0.88 → 0.74. CI failed at a 0.05 threshold.
+> Harness: https://github.com/JohnCarl-30/rag-eval-harness
+> Case study: https://github.com/JohnCarl-30/rag-eval-harness/blob/main/docs/nimbus-case-study.md
+> Resume: Shipped a RAG eval harness and gated a support bot: a weaker retriever cut mean context recall 0.88 → 0.74 and failed CI at a 0.05 threshold (40-row golden set).
