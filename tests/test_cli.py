@@ -21,6 +21,17 @@ def test_eval_traces_cli(tmp_path, traces_jsonl) -> None:
     assert "faithfulness" in result.output
 
 
+def test_eval_with_blank_database_url_env(tmp_path, traces_jsonl, monkeypatch) -> None:
+    from rag_eval_harness.config import clear_settings_cache
+
+    monkeypatch.setenv("DATABASE_URL", "")
+    monkeypatch.chdir(tmp_path)
+    clear_settings_cache()
+    result = runner.invoke(app, ["eval", str(traces_jsonl), "--evaluator", "stub"])
+    assert result.exit_code == 0, result.output
+    assert "Run id:" in result.output
+
+
 def test_eval_rejects_over_cap(tmp_path) -> None:
     path = tmp_path / "too-big.csv"
     path.write_text("question\n" + "\n".join(f"q{i}" for i in range(101)), encoding="utf-8")

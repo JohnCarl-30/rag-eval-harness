@@ -71,11 +71,13 @@ runs:
     - name: Evaluate
       shell: bash
       env:
-        DATABASE_URL: ${{ inputs.database-url }}
         OPENAI_API_KEY: ${{ inputs.openai-api-key }}
         OPENAI_BASE_URL: ${{ inputs.openai-base-url }}
       run: |
         set -euo pipefail
+        if [[ -n "${{ inputs.database-url }}" ]]; then
+          export DATABASE_URL="${{ inputs.database-url }}"
+        fi
         SOURCE="${{ inputs.traces }}"
         if [[ -n "${{ inputs.dataset }}" ]]; then
           SOURCE="${{ inputs.dataset }}"
@@ -101,9 +103,11 @@ runs:
     - name: Regress vs baseline
       if: ${{ inputs.baseline != '' }}
       shell: bash
-      env:
-        DATABASE_URL: ${{ inputs.database-url }}
       run: |
+        set -euo pipefail
+        if [[ -n "${{ inputs.database-url }}" ]]; then
+          export DATABASE_URL="${{ inputs.database-url }}"
+        fi
         rag-eval regress \
           --baseline "${{ inputs.baseline }}" \
           --head "${{ inputs.output }}" \
