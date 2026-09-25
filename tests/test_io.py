@@ -78,3 +78,10 @@ def test_nimbus_slice15_loads() -> None:
     assert len(rows) == 15
     assert all(row.question and row.answer and row.retrieved_contexts for row in rows)
     assert sum(1 for row in rows if row.has_ground_truth()) == 15
+
+
+@pytest.mark.parametrize("text", ["", "\ufeff", " \n"])
+@pytest.mark.parametrize("filename", ["empty.txt", "empty.csv", "empty.jsonl", "empty.json"])
+def test_empty_file_is_a_load_error(filename: str, text: str) -> None:
+    with pytest.raises(LoadError):
+        load_text(text, filename=filename)

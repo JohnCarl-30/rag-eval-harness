@@ -70,7 +70,7 @@ rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json>
 rag-eval serve
 ```
 
-`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`), or if head has more errored rows than baseline (means skip errored rows, so a timing-out SUT would otherwise pass). `diff` prints the same means plus the worst per-row drops and always exits 0 on a successful compare.
+`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`), or if head has more errored rows than baseline (means skip errored rows, so a timing-out SUT would otherwise pass). `diff` prints the same means plus the worst per-row drops (rows paired by question) and always exits 0 on a successful compare.
 
 ## Contracts
 

@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security: the SPA fallback route served any file on disk via an encoded `../` path (for example `/..%2f..%2fproc/self/environ`), without an API key. It now only serves files inside `web/dist`.
 - Security: CORS allowed every origin, so any website could read an open loopback API and create HTTP runs against arbitrary URLs. Cross-origin access is now off unless `RAG_EVAL_CORS_ORIGINS` is set.
 - `regress` (and the API/UI diff) passed when head errored on most rows, because means skip errored rows. Head with more errored rows than baseline now fails the gate.
+- `diff` and the UI Diff page paired rows by position, so a reordered or edited golden set compared unrelated questions. Rows now pair by question text; added or removed questions show with one side empty.
+- `diff` printed per-row drops with a plus sign (`(+1.0000)` for 1.0 → 0.0). They now print as negative deltas, like the mean table.
+- Uploading an empty non-CSV file returned a 500. It is now a 400 "File is empty."
+- API/UI uploads named datasets `golden.csv` while the CLI named them `golden`. Both use the file stem.
+- Only a completed run can be tagged as baseline (CLI exits 2, API returns 409).
+- Every CLI `eval` created a new dataset, so baseline tags never grouped runs. Re-evaluating identical rows under the same name now reuses the dataset.
+- Runs left `queued`/`running` by a stopped server stayed that way forever. `rag-eval serve` marks them failed on startup.
 - Empty `DATABASE_URL` (GitHub Actions passes `""` when the input is unset) is treated as the default SQLite file. The consumer Action was failing `create_engine` on every CI run.
 - README and SECURITY still talked as if the GitHub repository did not exist.
 

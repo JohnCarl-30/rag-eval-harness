@@ -111,6 +111,9 @@ def serve(
         )
         raise typer.Exit(1)
 
+    stale = _store(None).fail_interrupted_runs()
+    if stale:
+        typer.echo(f"Marked {stale} interrupted run(s) as failed.", err=True)
     uvicorn.run(create_app(), host=bind_host, port=bind_port)
 
 
@@ -166,11 +169,14 @@ def baseline(
 ) -> None:
     """Mark a completed run as the baseline for its dataset."""
     store = _store(db)
-    try:
-        run = store.set_baseline(run_id)
-    except KeyError:
+    run = store.get_run(run_id)
+    if run is None:
         typer.echo(f"Run not found: {run_id}", err=True)
-        raise typer.Exit(2) from None
+        raise typer.Exit(2)
+    if run.status != "completed":
+        typer.echo(f"Only a completed run can be a baseline (status={run.status})", err=True)
+        raise typer.Exit(2)
+    run = store.set_baseline(run_id)
     typer.echo(f"Tagged {run.id} as baseline for dataset {run.dataset_id}")
 
 
@@ -289,7 +295,7 @@ def diff(
             question = question[:77] + "..."
         typer.echo(
             f"  [{item.index}] {item.metric}  {item.baseline:.4f} -> {item.head:.4f}  "
-            f"({item.drop:+.4f})  {question}"
+            f"({-item.drop:+.4f})  {question}"
         )
 
 

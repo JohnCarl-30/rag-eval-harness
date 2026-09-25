@@ -123,6 +123,8 @@ def load_csv_text(text: str) -> list[EvalRow]:
 def load_text(text: str, *, filename: str = "upload.csv") -> list[EvalRow]:
     name = filename.lower()
     stripped = text.lstrip("\ufeff")
+    if not stripped.strip():
+        raise LoadError("File is empty.")
     if name.endswith(".jsonl") or name.endswith(".ndjson"):
         return load_jsonl_text(stripped)
     if name.endswith(".json"):
