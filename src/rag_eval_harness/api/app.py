@@ -26,6 +26,11 @@ def find_web_dist() -> Path | None:
     return None
 
 
+def _cors_origins() -> list[str]:
+    raw = os.environ.get("RAG_EVAL_CORS_ORIGINS", "")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 def create_app(
     store: Store | None = None,
     *,
@@ -48,12 +53,16 @@ def create_app(
     app.state.api_key = key
 
     app.add_middleware(ApiKeyMiddleware, enabled=auth_required, api_key=key)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # The UI is same-origin (served from web/dist, or proxied by Vite in dev), so
+    # cross-origin access is opt-in. A wildcard let any website read a loopback API.
+    cors_origins = _cors_origins()
+    if cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -63,6 +72,7 @@ def create_app(
 
     dist = find_web_dist()
     if dist is not None:
+        dist = dist.resolve()
         assets = dist / "assets"
         if assets.is_dir():
             app.mount("/assets", StaticFiles(directory=assets), name="assets")
@@ -73,8 +83,9 @@ def create_app(
                 from fastapi import HTTPException
 
                 raise HTTPException(status_code=404, detail="Not found")
-            candidate = dist / full_path
-            if full_path and candidate.is_file():
+            candidate = (dist / full_path).resolve()
+            # Encoded "../" survives routing; never serve outside dist.
+            if full_path and candidate.is_relative_to(dist) and candidate.is_file():
                 return FileResponse(candidate)
             return FileResponse(dist / "index.html")
 

@@ -103,7 +103,11 @@ export default function DiffPage() {
       {diff && (
         <>
           <p className={diff.passed ? "text-good" : "text-bad"}>
-            {diff.passed ? "No regression vs threshold." : "Regression: a mean dropped past the threshold."}
+            {diff.passed
+              ? "No regression vs threshold."
+              : diff.head.error_count > diff.baseline.error_count
+                ? `Regression: head errored on ${diff.head.error_count} rows (baseline ${diff.baseline.error_count}).`
+                : "Regression: a mean dropped past the threshold."}
           </p>
           <table className="w-full border-collapse text-left text-sm">
             <thead className="font-mono text-xs uppercase text-ink/60">

@@ -27,6 +27,16 @@ class RegressionReport:
     baseline_ref: str
     head_ref: str
     deltas: list[MetricDelta] = field(default_factory=list)
+    baseline_errors: int | None = None
+    head_errors: int | None = None
+
+    @property
+    def errors_increased(self) -> bool:
+        # Means skip errored rows, so a SUT that times out on most rows can keep
+        # its means. More errors than the baseline is a regression in its own right.
+        if self.baseline_errors is None or self.head_errors is None:
+            return False
+        return self.head_errors > self.baseline_errors
 
     def failing(self) -> list[MetricDelta]:
         return [item for item in self.deltas if item.dropped]
@@ -37,6 +47,9 @@ class RegressionReport:
             "threshold": self.threshold,
             "baseline_ref": self.baseline_ref,
             "head_ref": self.head_ref,
+            "baseline_errors": self.baseline_errors,
+            "head_errors": self.head_errors,
+            "errors_increased": self.errors_increased,
             "deltas": [
                 {
                     "metric": item.metric,
@@ -57,6 +70,8 @@ def compare_means(
     threshold: float = DEFAULT_THRESHOLD,
     baseline_ref: str = "baseline",
     head_ref: str = "head",
+    baseline_errors: int | None = None,
+    head_errors: int | None = None,
 ) -> RegressionReport:
     deltas: list[MetricDelta] = []
     for metric, base_value in sorted(baseline.items()):
@@ -72,14 +87,17 @@ def compare_means(
                 dropped=dropped,
             )
         )
-    passed = not any(item.dropped for item in deltas)
-    return RegressionReport(
-        passed=passed,
+    report = RegressionReport(
+        passed=True,
         threshold=threshold,
         baseline_ref=baseline_ref,
         head_ref=head_ref,
         deltas=deltas,
+        baseline_errors=baseline_errors,
+        head_errors=head_errors,
     )
+    report.passed = not any(item.dropped for item in deltas) and not report.errors_increased
+    return report
 
 
 def _means_from_payload(payload: dict[str, Any]) -> dict[str, float]:
@@ -171,3 +189,24 @@ def load_means_ref(ref: str, store: Store | None = None) -> tuple[str, dict[str,
     if not run.means:
         raise ValueError(f"Run {ref} has no means (status={run.status})")
     return ref, {str(key): float(value) for key, value in run.means.items()}
+
+
+def load_errors_ref(ref: str, store: Store | None = None) -> int | None:
+    """Error count for a run id or snapshot. None when a means-only file has none."""
+    path = Path(ref)
+    if path.is_file():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"{ref} must be a JSON object")
+        if "error_count" in payload:
+            return int(payload["error_count"] or 0)
+        rows = payload.get("rows")
+        if isinstance(rows, list):
+            return sum(1 for row in rows if isinstance(row, dict) and row.get("error"))
+        return None
+    if store is None:
+        raise ValueError(f"{ref} is not a file and no store was provided to look up a run id")
+    run = store.get_run(ref)
+    if run is None:
+        raise KeyError(f"Run not found: {ref}")
+    return run.error_count
