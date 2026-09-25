@@ -137,6 +137,32 @@ def load_rows_ref(ref: str, store: Store | None = None) -> tuple[str, list[RowSc
     return ref, store.get_run_scores(ref)
 
 
+def pair_rows(
+    baseline: list[RowScore], head: list[RowScore]
+) -> list[tuple[RowScore | None, RowScore | None]]:
+    """Match rows by question text, in head order.
+
+    Baseline and head are separate uploads, so a reordered or edited golden set
+    must not compare unrelated questions. Repeated questions pair in order.
+    Unmatched baseline rows come last with no head.
+    """
+    by_question: dict[str, list[int]] = {}
+    for index, row in enumerate(baseline):
+        by_question.setdefault(row.question.strip(), []).append(index)
+    used: set[int] = set()
+    pairs: list[tuple[RowScore | None, RowScore | None]] = []
+    for right in head:
+        queue = by_question.get(right.question.strip())
+        if queue:
+            index = queue.pop(0)
+            used.add(index)
+            pairs.append((baseline[index], right))
+        else:
+            pairs.append((None, right))
+    pairs.extend((left, None) for index, left in enumerate(baseline) if index not in used)
+    return pairs
+
+
 def worst_row_drops(
     baseline: list[RowScore],
     head: list[RowScore],
@@ -144,11 +170,10 @@ def worst_row_drops(
     metric: str | None = None,
     limit: int = 8,
 ) -> list[RowMetricDelta]:
-    n = min(len(baseline), len(head))
     drops: list[RowMetricDelta] = []
-    for index in range(n):
-        left = baseline[index]
-        right = head[index]
+    for index, (left, right) in enumerate(pair_rows(baseline, head)):
+        if left is None or right is None:
+            continue
         names = [metric] if metric else sorted(set(left.metrics) | set(right.metrics))
         for name in names:
             if not name:
@@ -163,7 +188,7 @@ def worst_row_drops(
             drops.append(
                 RowMetricDelta(
                     index=index,
-                    question=right.question or left.question,
+                    question=right.question,
                     metric=name,
                     baseline=base_value,
                     head=head_value,

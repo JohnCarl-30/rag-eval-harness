@@ -144,3 +144,39 @@ def test_diff_fails_when_head_errors_more(store: Store) -> None:
     diff = client.get(f"/api/runs/{ids[1]}/diff", params={"against": ids[0]}).json()
     assert diff["passed"] is False
     assert all(not item["dropped"] for item in diff["deltas"])
+
+
+def test_upload_names_dataset_by_stem_and_rejects_empty(store: Store, traces_jsonl) -> None:
+    client = TestClient(create_app(store, bind_host="127.0.0.1", api_key=None))
+    upload = client.post(
+        "/api/datasets",
+        files={"file": ("traces.jsonl", traces_jsonl.read_bytes(), "application/jsonl")},
+    )
+    assert upload.json()["name"] == "traces"
+    assert upload.json()["filename"] == "traces.jsonl"
+    empty = client.post("/api/datasets", files={"file": ("notes.txt", b"", "text/plain")})
+    assert empty.status_code == 400
+
+
+def test_baseline_requires_completed_run_and_diff_pairs_by_question(store: Store) -> None:
+    from rag_eval_harness.types import EvalRow, MetricSummary, RowScore
+
+    dataset = store.create_dataset([EvalRow(question="Q", answer="A")], name="d")
+    client = TestClient(create_app(store, bind_host="127.0.0.1", api_key=None))
+    pending = store.create_run(dataset_id=dataset.id, adapter_type="traces", evaluator="stub")
+    assert client.post(f"/api/runs/{pending.id}/baseline").status_code == 409
+
+    ids = []
+    for rows in (
+        [RowScore("a", "x", [], None, {"faithfulness": 0.9}), RowScore("b", "x", [], None, {})],
+        [RowScore("b", "x", [], None, {}), RowScore("a", "x", [], None, {"faithfulness": 0.9})],
+    ):
+        run = store.create_run(dataset_id=dataset.id, adapter_type="traces", evaluator="stub")
+        store.complete_run(run.id, MetricSummary(means={}, rows=rows, error_count=0))
+        ids.append(run.id)
+    assert client.post(f"/api/runs/{ids[0]}/baseline").status_code == 200
+    diff = client.get(f"/api/runs/{ids[1]}/diff", params={"against": ids[0]}).json()
+    assert [(row["baseline"]["question"], row["head"]["question"]) for row in diff["rows"]] == [
+        ("b", "b"),
+        ("a", "a"),
+    ]

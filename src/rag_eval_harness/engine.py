@@ -60,7 +60,11 @@ def run_eval(
     git_sha: str | None = None,
 ) -> tuple[Run, MetricSummary]:
     _ensure_cap(rows)
-    dataset = store.create_dataset(rows, name=dataset_name, filename=filename)
+    # Re-running the same golden set lands on one dataset, so its runs share a
+    # baseline tag instead of each run getting a dataset (and baseline) of its own.
+    dataset = store.find_identical_dataset(rows, name=dataset_name) or store.create_dataset(
+        rows, name=dataset_name, filename=filename
+    )
     run = store.create_run(
         dataset_id=dataset.id,
         adapter_type=adapter_type,

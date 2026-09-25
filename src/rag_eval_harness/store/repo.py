@@ -27,6 +27,10 @@ def make_engine(url: str) -> Engine:
     return create_engine(url, future=True, connect_args=connect_args)
 
 
+def _row_key(row: EvalRow) -> tuple[Any, ...]:
+    return (row.question, row.ground_truth, row.answer, tuple(row.retrieved_contexts))
+
+
 class Store:
     def __init__(self, url: str = "sqlite:///./rag_eval.db") -> None:
         self.url = url
@@ -67,6 +71,22 @@ class Store:
             session.commit()
             session.refresh(dataset)
             return dataset
+
+    def find_identical_dataset(self, rows: list[EvalRow], *, name: str) -> Dataset | None:
+        """Newest dataset with this name whose rows match exactly, if any."""
+        with self.session() as session:
+            candidates = list(
+                session.scalars(
+                    select(Dataset)
+                    .where(Dataset.name == name, Dataset.row_count == len(rows))
+                    .order_by(Dataset.created_at.desc())
+                )
+            )
+        wanted = [_row_key(row) for row in rows]
+        for dataset in candidates:
+            if [_row_key(row) for row in self.get_dataset_rows(dataset.id)] == wanted:
+                return dataset
+        return None
 
     def get_dataset(self, dataset_id: str) -> Dataset | None:
         with self.session() as session:
@@ -184,6 +204,21 @@ class Store:
             session.commit()
             session.refresh(run)
             return run
+
+    def fail_interrupted_runs(self) -> int:
+        """Fail runs left queued/running by a server that stopped mid-run.
+
+        API runs execute in-process, so at startup nothing can still be working
+        on them. Call once before serving, not per request.
+        """
+        with self.session() as session:
+            stale = list(session.scalars(select(Run).where(Run.status.in_(("queued", "running")))))
+            for run in stale:
+                run.status = "failed"
+                run.error_message = "Interrupted: the server stopped before this run finished."
+                run.completed_at = _utcnow()
+            session.commit()
+            return len(stale)
 
     def set_baseline(self, run_id: str) -> Run:
         with self.session() as session:

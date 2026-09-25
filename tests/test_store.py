@@ -48,3 +48,40 @@ def test_eval_from_traces_persists_means(store: Store, traces_jsonl) -> None:
     assert "context_precision" in run.means
     assert len(store.get_run_scores(run.id)) == 16
     assert store.list_datasets()[0].row_count == 16
+
+
+def test_reevaluating_same_file_reuses_its_dataset(store: Store, traces_jsonl) -> None:
+    first, _ = eval_from_path(store, traces_jsonl, evaluator="stub")
+    second, _ = eval_from_path(store, traces_jsonl, evaluator="lexical")
+    assert first.dataset_id == second.dataset_id
+    assert len(store.list_datasets()) == 1
+
+    store.set_baseline(first.id)
+    store.set_baseline(second.id)
+    assert [run.id for run in store.list_runs() if run.is_baseline] == [second.id]
+
+
+def test_changed_rows_get_a_new_dataset(store: Store) -> None:
+    from rag_eval_harness.engine import run_eval
+
+    kwargs = {"dataset_name": "g", "adapter_type": "traces", "evaluator": "stub"}
+    a, _ = run_eval(store, [EvalRow(question="Q", answer="A")], **kwargs)
+    b, _ = run_eval(store, [EvalRow(question="Q", answer="B")], **kwargs)
+    assert a.dataset_id != b.dataset_id
+
+
+def test_fail_interrupted_runs(store: Store) -> None:
+    dataset = store.create_dataset([EvalRow(question="Q", answer="A")], name="d")
+    queued = store.create_run(dataset_id=dataset.id, adapter_type="traces", evaluator="stub")
+    running = store.create_run(dataset_id=dataset.id, adapter_type="traces", evaluator="stub")
+    store.update_run(running.id, status="running")
+    finished = store.create_run(dataset_id=dataset.id, adapter_type="traces", evaluator="stub")
+    store.fail_run(finished.id, "earlier failure")
+
+    assert store.fail_interrupted_runs() == 2
+    for run_id in (queued.id, running.id):
+        run = store.get_run(run_id)
+        assert run.status == "failed"
+        assert "Interrupted" in run.error_message
+    assert store.get_run(finished.id).error_message == "earlier failure"
+    assert store.fail_interrupted_runs() == 0

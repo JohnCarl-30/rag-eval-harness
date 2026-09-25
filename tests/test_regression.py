@@ -108,3 +108,37 @@ def test_load_errors_ref_from_snapshot_rows_and_means_only(tmp_path) -> None:
     bare = tmp_path / "bare.json"
     bare.write_text(json.dumps({"means": {"faithfulness": 0.5}}), encoding="utf-8")
     assert load_errors_ref(str(bare)) is None
+
+
+def test_row_drops_pair_by_question_not_position() -> None:
+    from rag_eval_harness.regression.compare import pair_rows, worst_row_drops
+    from rag_eval_harness.types import RowScore
+
+    baseline = [
+        RowScore("q0", "a", [], None, {"faithfulness": 0.9}),
+        RowScore("q1", "a", [], None, {"faithfulness": 0.2}),
+        RowScore("gone", "a", [], None, {"faithfulness": 0.9}),
+    ]
+    # Reordered, one row removed, one added: nothing actually got worse.
+    head = [
+        RowScore("new", "a", [], None, {"faithfulness": 0.1}),
+        RowScore("q1", "a", [], None, {"faithfulness": 0.2}),
+        RowScore("q0", "a", [], None, {"faithfulness": 0.9}),
+    ]
+    assert worst_row_drops(baseline, head) == []
+    pairs = pair_rows(baseline, head)
+    assert [(b and b.question, h and h.question) for b, h in pairs] == [
+        (None, "new"),
+        ("q1", "q1"),
+        ("q0", "q0"),
+        ("gone", None),
+    ]
+
+
+def test_pair_rows_matches_repeated_questions_in_order() -> None:
+    from rag_eval_harness.regression.compare import pair_rows
+    from rag_eval_harness.types import RowScore
+
+    baseline = [RowScore("q", "first", [], None, {}), RowScore("q", "second", [], None, {})]
+    head = [RowScore("q", "x", [], None, {}), RowScore("q", "y", [], None, {})]
+    assert [b.answer for b, _ in pair_rows(baseline, head)] == ["first", "second"]

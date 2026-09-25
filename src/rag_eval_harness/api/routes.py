@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, Request, UploadFile
@@ -15,7 +16,7 @@ from rag_eval_harness.api.schemas import (
 )
 from rag_eval_harness.engine import execute_run
 from rag_eval_harness.io import LoadError, RowCapError, load_text
-from rag_eval_harness.regression.compare import DEFAULT_THRESHOLD, compare_means
+from rag_eval_harness.regression.compare import DEFAULT_THRESHOLD, compare_means, pair_rows
 from rag_eval_harness.store.models import Dataset, Run
 from rag_eval_harness.store.repo import Store
 
@@ -95,7 +96,7 @@ async def upload_dataset(
         rows = load_text(text, filename=filename)
     except (LoadError, RowCapError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    dataset = store.create_dataset(rows, name=name or filename, filename=filename)
+    dataset = store.create_dataset(rows, name=name or Path(filename).stem, filename=filename)
     return _dataset_out(dataset)
 
 
@@ -189,8 +190,13 @@ def get_run(run_id: str, request: Request) -> RunDetailOut:
 @router.post("/runs/{run_id}/baseline", response_model=RunOut)
 def set_baseline(run_id: str, request: Request) -> RunOut:
     store = _store(request)
-    if store.get_run(run_id) is None:
+    run = store.get_run(run_id)
+    if run is None:
         raise HTTPException(status_code=404, detail="Run not found")
+    if run.status != "completed":
+        raise HTTPException(
+            status_code=409, detail=f"Only a completed run can be a baseline (status={run.status})"
+        )
     return _run_out(store.set_baseline(run_id))
 
 
@@ -217,19 +223,16 @@ def diff_runs(
     )
     head_rows = store.get_run_scores(head.id)
     base_rows = store.get_run_scores(baseline.id)
-    paired: list[dict[str, Any]] = []
-    limit = max(len(head_rows), len(base_rows))
-    for index in range(limit):
-        left = base_rows[index] if index < len(base_rows) else None
-        right = head_rows[index] if index < len(head_rows) else None
-        paired.append(
-            {
-                "index": index,
-                "question": (right or left).question if (right or left) else "",
-                "baseline": None if left is None else left.to_dict(),
-                "head": None if right is None else right.to_dict(),
-            }
-        )
+    paired = [
+        {
+            "index": index,
+            "question": (right or left).question,
+            "baseline": None if left is None else left.to_dict(),
+            "head": None if right is None else right.to_dict(),
+        }
+        for index, (left, right) in enumerate(pair_rows(base_rows, head_rows))
+        if left is not None or right is not None
+    ]
     return DiffOut(
         passed=report.passed,
         threshold=report.threshold,
