@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Security: the SPA fallback route served any file on disk via an encoded `../` path (for example `/..%2f..%2fproc/self/environ`), without an API key. It now only serves files inside `web/dist`.
+- Security: CORS allowed every origin, so any website could read an open loopback API and create HTTP runs against arbitrary URLs. Cross-origin access is now off unless `RAG_EVAL_CORS_ORIGINS` is set.
+- `regress` (and the API/UI diff) passed when head errored on most rows, because means skip errored rows. Head with more errored rows than baseline now fails the gate.
 - Empty `DATABASE_URL` (GitHub Actions passes `""` when the input is unset) is treated as the default SQLite file. The consumer Action was failing `create_engine` on every CI run.
 - README and SECURITY still talked as if the GitHub repository did not exist.
 

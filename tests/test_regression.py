@@ -79,3 +79,32 @@ def test_worst_row_drops_ranks_the_largest_fall() -> None:
     assert drops[0].index == 1
     assert drops[0].drop == pytest.approx(0.6)
     assert drops[1].index == 0
+
+
+def test_more_errored_rows_fails_even_with_equal_means() -> None:
+    means = {"faithfulness": 0.8}
+    report = compare_means(means, means, baseline_errors=0, head_errors=15)
+    assert report.errors_increased is True
+    assert report.passed is False
+    assert report.failing() == []
+
+
+def test_error_check_skipped_when_counts_unknown_or_not_worse() -> None:
+    means = {"faithfulness": 0.8}
+    assert compare_means(means, means, baseline_errors=3, head_errors=3).passed is True
+    assert compare_means(means, means, baseline_errors=3, head_errors=1).passed is True
+    assert compare_means(means, means, baseline_errors=None, head_errors=9).passed is True
+
+
+def test_load_errors_ref_from_snapshot_rows_and_means_only(tmp_path) -> None:
+    from rag_eval_harness.regression.compare import load_errors_ref
+
+    counted = tmp_path / "counted.json"
+    counted.write_text(json.dumps({"means": {}, "error_count": 4}), encoding="utf-8")
+    assert load_errors_ref(str(counted)) == 4
+    rows = tmp_path / "rows.json"
+    rows.write_text(json.dumps({"means": {}, "rows": [{"error": "x"}, {}]}), encoding="utf-8")
+    assert load_errors_ref(str(rows)) == 1
+    bare = tmp_path / "bare.json"
+    bare.write_text(json.dumps({"means": {"faithfulness": 0.5}}), encoding="utf-8")
+    assert load_errors_ref(str(bare)) is None

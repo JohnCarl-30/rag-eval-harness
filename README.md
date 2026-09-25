@@ -70,7 +70,7 @@ rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json>
 rag-eval serve
 ```
 
-`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`). `diff` prints the same means plus the worst per-row drops and always exits 0 on a successful compare.
+`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`), or if head has more errored rows than baseline (means skip errored rows, so a timing-out SUT would otherwise pass). `diff` prints the same means plus the worst per-row drops and always exits 0 on a successful compare.
 
 ## Contracts
 
@@ -82,7 +82,7 @@ rag-eval serve
 | Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context, use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
-| Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. |
+| Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. No cross-origin access unless `RAG_EVAL_CORS_ORIGINS` lists origins (comma-separated). |
 | Regression | Tag a run as baseline. Gate on **mean** delta. Per-row diffs are UI-only. |
 
 Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [storage](docs/storage.md) · [Nimbus case study](docs/nimbus-case-study.md) · [Chunking case study](docs/nimbus-chunking.md) · [Cost and p95](docs/nimbus-cost.md) · [Lexical vs judge](docs/nimbus-judge.md)

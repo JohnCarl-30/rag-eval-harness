@@ -14,6 +14,7 @@ from rag_eval_harness.engine import eval_from_path
 from rag_eval_harness.regression.compare import (
     DEFAULT_THRESHOLD,
     compare_means,
+    load_errors_ref,
     load_means_ref,
     load_rows_ref,
     worst_row_drops,
@@ -57,6 +58,16 @@ def _print_run(run, summary=None) -> None:
             typer.echo(f"  {name}: {value:.4f}")
     if run.status == "failed" and run.error_message:
         typer.echo(f"Error:      {run.error_message}")
+
+
+def _print_errors(report) -> None:
+    if report.baseline_errors is None or report.head_errors is None:
+        return
+    flag = "FAIL" if report.errors_increased else "ok"
+    typer.echo(
+        f"  {'errored rows':20} baseline={report.baseline_errors}  "
+        f"head={report.head_errors}  {flag}"
+    )
 
 
 def _version_callback(value: bool) -> None:
@@ -179,11 +190,14 @@ def regress(
     ] = DEFAULT_THRESHOLD,
     db: DbOption = None,
 ) -> None:
-    """Compare mean metrics. Exit 1 if any mean drops by more than --threshold."""
+    """Compare mean metrics. Exit 1 if any mean drops by more than --threshold
+    or head has more errored rows than baseline."""
     store = _store(db)
     try:
         b_ref, b_means = load_means_ref(baseline_ref, store)
         h_ref, h_means = load_means_ref(head_ref, store)
+        b_errors = load_errors_ref(baseline_ref, store)
+        h_errors = load_errors_ref(head_ref, store)
     except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
@@ -193,6 +207,8 @@ def regress(
         threshold=threshold,
         baseline_ref=b_ref,
         head_ref=h_ref,
+        baseline_errors=b_errors,
+        head_errors=h_errors,
     )
     typer.echo(f"threshold: {report.threshold}")
     typer.echo(f"baseline:  {report.baseline_ref}")
@@ -203,6 +219,7 @@ def regress(
             f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
             f"delta={item.delta:+.4f}  {flag}"
         )
+    _print_errors(report)
     if not report.passed:
         typer.echo("Regression detected.", err=True)
         raise typer.Exit(1)
@@ -235,6 +252,8 @@ def diff(
     try:
         b_ref, b_means = load_means_ref(baseline_ref, store)
         h_ref, h_means = load_means_ref(head_ref, store)
+        b_errors = load_errors_ref(baseline_ref, store)
+        h_errors = load_errors_ref(head_ref, store)
         _, b_rows = load_rows_ref(baseline_ref, store)
         _, h_rows = load_rows_ref(head_ref, store)
     except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
@@ -246,6 +265,8 @@ def diff(
         threshold=threshold,
         baseline_ref=b_ref,
         head_ref=h_ref,
+        baseline_errors=b_errors,
+        head_errors=h_errors,
     )
     typer.echo(f"threshold: {report.threshold}")
     typer.echo(f"baseline:  {report.baseline_ref}")
@@ -256,6 +277,7 @@ def diff(
             f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
             f"delta={item.delta:+.4f}  {flag}"
         )
+    _print_errors(report)
     drops = worst_row_drops(b_rows, h_rows, metric=metric, limit=limit)
     if not drops:
         typer.echo("No per-row drops.")

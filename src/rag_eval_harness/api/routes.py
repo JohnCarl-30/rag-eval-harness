@@ -212,6 +212,8 @@ def diff_runs(
         threshold=threshold,
         baseline_ref=baseline.id,
         head_ref=head.id,
+        baseline_errors=baseline.error_count,
+        head_errors=head.error_count,
     )
     head_rows = store.get_run_scores(head.id)
     base_rows = store.get_run_scores(baseline.id)

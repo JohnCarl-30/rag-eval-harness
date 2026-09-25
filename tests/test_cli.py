@@ -134,3 +134,18 @@ def test_serve_requires_key_off_loopback(monkeypatch) -> None:
     result = runner.invoke(app, ["serve", "--host", "0.0.0.0", "--port", "8000"])
     assert result.exit_code == 1
     assert "RAG_EVAL_API_KEY" in result.output
+
+
+def test_regress_fails_when_head_errors_more(tmp_path) -> None:
+    means = {"faithfulness": 0.8, "answer_relevancy": 0.8}
+    base = tmp_path / "base.json"
+    base.write_text(json.dumps({"means": means, "error_count": 0}), encoding="utf-8")
+    head = tmp_path / "head.json"
+    head.write_text(json.dumps({"means": means, "error_count": 15}), encoding="utf-8")
+    db_url = f"sqlite:///{tmp_path / 'cli.db'}"
+    result = runner.invoke(
+        app, ["regress", "--baseline", str(base), "--head", str(head), "--db", db_url]
+    )
+    assert result.exit_code == 1, result.output
+    assert "errored rows" in result.output
+    assert "Regression detected" in result.output
