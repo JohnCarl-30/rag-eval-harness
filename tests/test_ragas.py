@@ -72,3 +72,21 @@ def test_ragas_optional_live_judge() -> None:
         ]
     )
     assert METRIC_FAITHFULNESS in summary.means
+
+
+def test_ragas_abstained_row_without_reference_is_not_an_error() -> None:
+    faith = FakeMetric(0.9)
+    evaluator = RagasEvaluator(metrics={"faithfulness": faith, "answer_relevancy": FakeMetric(0.8)})
+    rows = [
+        EvalRow(question="Q", answer="A", retrieved_contexts=["c"]),
+        EvalRow(
+            question="Refused",
+            answer="I don't know.",
+            retrieved_contexts=["c"],
+            abstained=True,
+        ),
+    ]
+    summary = evaluator.evaluate(rows)
+    assert summary.error_count == 0
+    assert summary.rows[1].metrics == {}
+    assert len(faith.calls) == 1

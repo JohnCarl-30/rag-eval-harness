@@ -14,6 +14,10 @@ When any row has `ground_truth` / `reference`:
 
 Rows without ground truth omit the context metrics. Means are the average over successful rows only. If every row errors, required means are `0.0`.
 
+### Abstained rows
+
+A row marked `abstained` (alias `escalated`) omits faithfulness and answer relevancy; context metrics still apply. A refusal like "I don't have that in the help center" shares no words with the retrieved articles, so lexical faithfulness scored every correct refusal near zero, and a pipeline that learned to refuse out-of-scope questions failed the gate. Quoting the wrong article instead scored high ([nimbus-judge.md](nimbus-judge.md)). Measure whether it should have refused with a separate escalation check, not with faithfulness.
+
 ## Stub evaluator
 
 Default. No judge key. Hashes `question` / `answer` / contexts / ground truth into stable scores in `[0.5, 1.0]`. Use it for demos, UI wiring, and CI that should not call a model.

@@ -36,6 +36,7 @@ Upgrade from 0.1.0: it serves any file on disk to unauthenticated requests when 
 - Runs left `queued`/`running` by a stopped server stayed that way forever. `rag-eval serve` marks them failed on startup.
 - Empty `DATABASE_URL` (GitHub Actions passes `""` when the input is unset) is treated as the default SQLite file. The consumer Action was failing `create_engine` on every CI run.
 - README and SECURITY still talked as if the GitHub repository did not exist.
+- Lexical faithfulness scored every correct refusal near zero, so a pipeline that learned to refuse out-of-scope questions failed the gate (Relaydesk: 0.7049 vs 0.7823). Rows marked `abstained` (alias `escalated`, from the HTTP response or a traces column) now skip faithfulness and answer relevancy; context metrics still apply. See [metrics](docs/metrics.md#abstained-rows).
 - `v0.1.0` never reached PyPI: the trusted publisher was not registered, so the upload failed with `invalid-publisher`. `docs/ci.md` now spells out the pending-publisher step.
 
 ## [0.1.0] - 2026-08-27

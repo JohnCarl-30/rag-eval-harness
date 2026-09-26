@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 
 from rag_eval_harness.io import parse_contexts
-from rag_eval_harness.types import EvalRow
+from rag_eval_harness.types import EvalRow, is_truthy
 
 
 class HttpAdapter:
@@ -32,14 +32,15 @@ class HttpAdapter:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
-    def _parse_response(self, payload: Any) -> tuple[str | None, list[str]]:
+    def _parse_response(self, payload: Any) -> tuple[str | None, list[str], bool]:
         if not isinstance(payload, dict):
             raise ValueError("SUT response must be a JSON object")
         answer = payload.get("answer", payload.get("response"))
         contexts = payload.get("retrieved_contexts", payload.get("contexts"))
+        abstained = payload.get("abstained", payload.get("escalated"))
         if answer is None:
             raise ValueError("SUT response missing answer")
-        return str(answer), parse_contexts(contexts)
+        return str(answer), parse_contexts(contexts), is_truthy(abstained)
 
     def run(self, rows: list[EvalRow]) -> list[EvalRow]:
         owns_client = self._client is None
@@ -57,13 +58,14 @@ class HttpAdapter:
                         headers=self._headers(),
                     )
                     response.raise_for_status()
-                    answer, contexts = self._parse_response(response.json())
+                    answer, contexts, abstained = self._parse_response(response.json())
                     out.append(
                         EvalRow(
                             question=row.question,
                             answer=answer,
                             retrieved_contexts=contexts,
                             ground_truth=row.ground_truth,
+                            abstained=abstained,
                         )
                     )
                 except Exception as exc:  # noqa: BLE001 — per-row failure must not abort the run

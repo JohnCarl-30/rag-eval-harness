@@ -7,7 +7,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-from rag_eval_harness.types import COLUMN_ALIASES, ROW_CAP, EvalRow
+from rag_eval_harness.types import COLUMN_ALIASES, ROW_CAP, EvalRow, is_truthy
 
 
 class RowCapError(ValueError):
@@ -63,6 +63,7 @@ def record_to_row(record: Mapping[str, Any]) -> EvalRow | None:
         answer=None if answer is None else str(answer),
         retrieved_contexts=parse_contexts(_pick(record, "retrieved_contexts")),
         ground_truth=None if ground_truth is None else str(ground_truth),
+        abstained=is_truthy(_pick(record, "abstained")),
     )
 
 
