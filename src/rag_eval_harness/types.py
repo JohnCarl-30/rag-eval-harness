@@ -22,6 +22,7 @@ COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
     "ground_truth": ("ground_truth", "reference"),
     "answer": ("answer", "response"),
     "retrieved_contexts": ("retrieved_contexts", "contexts"),
+    "abstained": ("abstained", "escalated"),
 }
 
 
@@ -32,9 +33,18 @@ class EvalRow:
     retrieved_contexts: list[str] = field(default_factory=list)
     ground_truth: str | None = None
     error: str | None = None
+    # The SUT declined to answer (refused, or handed off to a human). Answer
+    # metrics are skipped: a refusal is neither grounded nor ungrounded.
+    abstained: bool = False
 
     def has_ground_truth(self) -> bool:
         return bool(self.ground_truth and self.ground_truth.strip())
+
+
+def is_truthy(value: Any) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
 
 
 @dataclass

@@ -56,3 +56,18 @@ def test_http_adapter_sends_bearer(monkeypatch) -> None:
     assert seen["authorization"] == "Bearer abc"
     assert out[0].answer == "alias"
     assert out[0].retrieved_contexts == ["one", "two"]
+
+
+def test_http_adapter_reads_escalated_as_abstained() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        refused = b"crypto" in request.read()
+        return httpx.Response(
+            200,
+            json={"answer": "no", "retrieved_contexts": ["ctx"], "escalated": refused},
+        )
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    out = HttpAdapter("https://rag.example/query", client=client).run(
+        [EvalRow(question="Can I pay with crypto?"), EvalRow(question="How many seats?")]
+    )
+    assert [row.abstained for row in out] == [True, False]

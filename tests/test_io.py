@@ -85,3 +85,9 @@ def test_nimbus_slice15_loads() -> None:
 def test_empty_file_is_a_load_error(filename: str, text: str) -> None:
     with pytest.raises(LoadError):
         load_text(text, filename=filename)
+
+
+def test_abstained_column_and_escalated_alias() -> None:
+    text = "question,answer,escalated\nQ1,A1,true\nQ2,A2,false\nQ3,A3,\n"
+    rows = load_csv_text(text)
+    assert [row.abstained for row in rows] == [True, False, False]
