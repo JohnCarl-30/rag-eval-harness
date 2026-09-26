@@ -92,7 +92,7 @@ Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci
 `stub` is keyless CI smoke. Hashes look healthy on junk contexts. Use `lexical` for a real gate.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@v0.1.0
+- uses: JohnCarl-30/rag-eval-harness@v0.1.1
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical

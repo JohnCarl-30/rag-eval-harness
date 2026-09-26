@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "rag-eval-harness"
-version = "0.1.0"
+version = "0.1.1"
 description = "RAGAS with a memory and a diff view. Evaluate RAG pipelines, persist runs, and fail CI on regressions."
 readme = "README.md"
 license = "MIT"

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-09-26
+
+Upgrade from 0.1.0: it serves any file on disk to unauthenticated requests when `web/dist` is present (the Docker image), and allows every origin via CORS.
+
 ### Added
 
 - Nimbus chunking case study and committed `chunked.json` / `hybrid-chunked.json` snapshots. Precision rose, recall failed the 0.05 gate, production stayed on articles.
@@ -32,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Runs left `queued`/`running` by a stopped server stayed that way forever. `rag-eval serve` marks them failed on startup.
 - Empty `DATABASE_URL` (GitHub Actions passes `""` when the input is unset) is treated as the default SQLite file. The consumer Action was failing `create_engine` on every CI run.
 - README and SECURITY still talked as if the GitHub repository did not exist.
+- `v0.1.0` never reached PyPI: the trusted publisher was not registered, so the upload failed with `invalid-publisher`. `docs/ci.md` now spells out the pending-publisher step.
 
 ## [0.1.0] - 2026-08-27
 
