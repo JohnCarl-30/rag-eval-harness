@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `rag-eval investigate` and the `agent` extra. After the `regress` gate fails, a LangGraph graph triages failing means by stage, runs one Pydantic AI diagnoser per stage in parallel, and summarizes. Exit codes match `regress`. See [docs/agent.md](docs/agent.md).
 - Nimbus chunking case study and committed `chunked.json` / `hybrid-chunked.json` snapshots. Precision rose, recall failed the 0.05 gate, production stayed on articles.
 - Nimbus cost/p95 log. Extractive `/api/eval` is 0.12 ms/row and $0. Lexical stays the PR gate.
 - Nimbus golden set grew to 50 rows with [reasons.md](examples/nimbus/reasons.md). Case-study snapshots stay on the original 40. `baseline-50.json` is the new lexical lock.

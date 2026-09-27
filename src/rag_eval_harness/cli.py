@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,7 @@ from rag_eval_harness.config import get_settings
 from rag_eval_harness.engine import eval_from_path
 from rag_eval_harness.regression.compare import (
     DEFAULT_THRESHOLD,
+    RegressionReport,
     compare_means,
     load_means_ref,
     load_rows_ref,
@@ -57,6 +59,18 @@ def _print_run(run, summary=None) -> None:
             typer.echo(f"  {name}: {value:.4f}")
     if run.status == "failed" and run.error_message:
         typer.echo(f"Error:      {run.error_message}")
+
+
+def _print_report(report: RegressionReport) -> None:
+    typer.echo(f"threshold: {report.threshold}")
+    typer.echo(f"baseline:  {report.baseline_ref}")
+    typer.echo(f"head:      {report.head_ref}")
+    for item in report.deltas:
+        flag = "FAIL" if item.dropped else "ok"
+        typer.echo(
+            f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
+            f"delta={item.delta:+.4f}  {flag}"
+        )
 
 
 def _version_callback(value: bool) -> None:
@@ -194,15 +208,7 @@ def regress(
         baseline_ref=b_ref,
         head_ref=h_ref,
     )
-    typer.echo(f"threshold: {report.threshold}")
-    typer.echo(f"baseline:  {report.baseline_ref}")
-    typer.echo(f"head:      {report.head_ref}")
-    for item in report.deltas:
-        flag = "FAIL" if item.dropped else "ok"
-        typer.echo(
-            f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
-            f"delta={item.delta:+.4f}  {flag}"
-        )
+    _print_report(report)
     if not report.passed:
         typer.echo("Regression detected.", err=True)
         raise typer.Exit(1)
@@ -247,15 +253,7 @@ def diff(
         baseline_ref=b_ref,
         head_ref=h_ref,
     )
-    typer.echo(f"threshold: {report.threshold}")
-    typer.echo(f"baseline:  {report.baseline_ref}")
-    typer.echo(f"head:      {report.head_ref}")
-    for item in report.deltas:
-        flag = "FAIL" if item.dropped else "ok"
-        typer.echo(
-            f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
-            f"delta={item.delta:+.4f}  {flag}"
-        )
+    _print_report(report)
     drops = worst_row_drops(b_rows, h_rows, metric=metric, limit=limit)
     if not drops:
         typer.echo("No per-row drops.")
@@ -269,6 +267,87 @@ def diff(
             f"  [{item.index}] {item.metric}  {item.baseline:.4f} -> {item.head:.4f}  "
             f"({item.drop:+.4f})  {question}"
         )
+
+
+@app.command()
+def investigate(
+    baseline_ref: Annotated[
+        str,
+        typer.Option("--baseline", help="Baseline run id or JSON snapshot path."),
+    ],
+    head_ref: Annotated[
+        str,
+        typer.Option("--head", help="Head run id or JSON snapshot path."),
+    ],
+    threshold: Annotated[
+        float,
+        typer.Option("--threshold", help="Fail if any mean drops by more than this."),
+    ] = DEFAULT_THRESHOLD,
+    limit: Annotated[
+        int,
+        typer.Option("--limit", help="Worst rows per failing stage sent to the model."),
+    ] = 5,
+    model: Annotated[
+        str | None,
+        typer.Option(
+            "--model",
+            envvar="RAG_EVAL_AGENT_MODEL",
+            help="Pydantic AI model string. Default: openai-chat:$OPENAI_MODEL.",
+        ),
+    ] = None,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", help="Write the investigation as JSON."),
+    ] = None,
+    db: DbOption = None,
+) -> None:
+    """Run the regress gate, then have agents explain a failure. Exit code matches regress."""
+    try:
+        from rag_eval_harness.agent.graph import investigate as run_investigation
+    except ImportError as exc:
+        typer.echo(
+            "The agent extra is not installed. Run: pip install 'rag-eval-harness[agent]'",
+            err=True,
+        )
+        raise typer.Exit(2) from exc
+    store = _store(db)
+    try:
+        b_ref, b_means = load_means_ref(baseline_ref, store)
+        h_ref, h_means = load_means_ref(head_ref, store)
+        _, b_rows = load_rows_ref(baseline_ref, store)
+        _, h_rows = load_rows_ref(head_ref, store)
+    except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(2) from exc
+    report = compare_means(
+        b_means,
+        h_means,
+        threshold=threshold,
+        baseline_ref=b_ref,
+        head_ref=h_ref,
+    )
+    _print_report(report)
+    if report.passed:
+        typer.echo("No regression. Nothing to investigate.")
+        return
+    model_name = model or f"openai-chat:{get_settings().openai_model}"
+    typer.echo(f"Investigating with {model_name}...")
+    try:
+        result = asyncio.run(
+            run_investigation(report, b_rows, h_rows, model=model_name, limit=limit)
+        )
+    except Exception as exc:
+        # The gate already failed. A broken model call must not turn that into a pass.
+        typer.echo(f"Investigation failed: {exc}", err=True)
+        typer.echo("Regression detected.", err=True)
+        raise typer.Exit(1) from exc
+    typer.echo("")
+    typer.echo(result.to_markdown())
+    if output:
+        output.write_text(json.dumps(result.to_dict(), indent=2), encoding="utf-8")
+        typer.echo(f"Wrote {output}")
+    typer.echo("Regression detected.", err=True)
+    raise typer.Exit(1)
 
 
 @app.command("runs")

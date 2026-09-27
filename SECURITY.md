@@ -26,3 +26,4 @@ You should receive an acknowledgement within 7 days. Prefer GitHub private vulne
 - HTTP row errors are short codes (timeout, HTTP status, exception class). They do not include the request URL.
 - Each HTTP row has its own timeout (default 30s). A hung SUT becomes a row error, not a hung process.
 - The stub evaluator does not call a model and does not need `OPENAI_API_KEY`.
+- `rag-eval investigate` sends up to `--limit` rows per failing stage to the configured model provider: question, ground truth, answers, and clipped contexts. `regress` and `diff` send nothing.

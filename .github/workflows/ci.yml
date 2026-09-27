@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: uv sync --frozen --group dev
+        run: uv sync --frozen --group dev --extra agent
       - name: Ruff
         run: uv run ruff check src tests
       - name: Pytest
