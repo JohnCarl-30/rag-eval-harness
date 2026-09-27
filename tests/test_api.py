@@ -84,3 +84,36 @@ def test_http_run_with_dummy_handler(store: Store, golden_csv) -> None:
     # golden csv has no answers → traces adapter should record row errors
     assert run.status == "completed"
     assert summary.error_count == 16
+
+
+def test_api_redacts_http_adapter_secrets(store: Store, golden_csv) -> None:
+    app = create_app(store, bind_host="127.0.0.1", api_key=None)
+    client = TestClient(app)
+    upload = client.post(
+        "/api/datasets",
+        files={"file": ("golden.csv", golden_csv.read_bytes(), "text/csv")},
+    )
+    assert upload.status_code == 200, upload.text
+    created = client.post(
+        "/api/runs",
+        json={
+            "dataset_id": upload.json()["id"],
+            "adapter": "http",
+            "sut_url": "https://rag.example/eval?api_key=SUPERSECRET",
+            "sut_token": "tok_live_xyz",
+            "timeout_seconds": 0.2,
+            "evaluator": "stub",
+        },
+    )
+    assert created.status_code == 200, created.text
+    assert "SUPERSECRET" not in created.text
+    assert "tok_live_xyz" not in created.text
+    config = created.json()["adapter_config"]
+    assert config["token"] == "***"
+    assert config["url"] == "https://rag.example/eval"
+
+    detail = client.get(f"/api/runs/{created.json()['id']}")
+    assert "SUPERSECRET" not in detail.text
+    assert "tok_live_xyz" not in detail.text
+    assert detail.json()["adapter_config"]["token"] == "***"
+    assert detail.json()["adapter_config"]["url"] == "https://rag.example/eval"

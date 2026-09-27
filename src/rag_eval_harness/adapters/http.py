@@ -8,6 +8,14 @@ from rag_eval_harness.io import parse_contexts
 from rag_eval_harness.types import EvalRow
 
 
+def _row_error(exc: BaseException) -> str:
+    if isinstance(exc, httpx.TimeoutException):
+        return "http adapter: timeout"
+    if isinstance(exc, httpx.HTTPStatusError):
+        return f"http adapter: HTTP {exc.response.status_code}"
+    return f"http adapter: {type(exc).__name__}"
+
+
 class HttpAdapter:
     """POST {\"question\"} to a user RAG endpoint and collect answer + contexts."""
 
@@ -37,7 +45,7 @@ class HttpAdapter:
             raise ValueError("SUT response must be a JSON object")
         answer = payload.get("answer", payload.get("response"))
         contexts = payload.get("retrieved_contexts", payload.get("contexts"))
-        if answer is None:
+        if answer is None or not str(answer).strip():
             raise ValueError("SUT response missing answer")
         return str(answer), parse_contexts(contexts)
 
@@ -73,7 +81,7 @@ class HttpAdapter:
                             answer=row.answer,
                             retrieved_contexts=row.retrieved_contexts,
                             ground_truth=row.ground_truth,
-                            error=f"http adapter: {exc}",
+                            error=_row_error(exc),
                         )
                     )
             return out

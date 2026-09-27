@@ -15,6 +15,7 @@ from rag_eval_harness.api.schemas import (
 )
 from rag_eval_harness.engine import execute_run
 from rag_eval_harness.io import LoadError, RowCapError, load_text
+from rag_eval_harness.redact import redact_adapter_config, redact_error
 from rag_eval_harness.regression.compare import DEFAULT_THRESHOLD, compare_means
 from rag_eval_harness.store.models import Dataset, Run
 from rag_eval_harness.store.repo import Store
@@ -43,10 +44,7 @@ def _dataset_out(dataset: Dataset) -> DatasetOut:
 
 
 def _redact(config: dict[str, Any] | None) -> dict[str, Any]:
-    data = dict(config or {})
-    if data.get("token"):
-        data["token"] = "***"
-    return data
+    return redact_adapter_config(config)
 
 
 def _run_out(run: Run) -> RunOut:
@@ -59,7 +57,7 @@ def _run_out(run: Run) -> RunOut:
         label=run.label,
         git_sha=run.git_sha,
         status=run.status,
-        error_message=run.error_message,
+        error_message=redact_error(run.error_message, run.adapter_config),
         is_baseline=run.is_baseline,
         means=run.means,
         error_count=run.error_count,
@@ -182,7 +180,17 @@ def get_run(run_id: str, request: Request) -> RunDetailOut:
     base = _run_out(run)
     return RunDetailOut(
         **base.model_dump(),
-        rows=[RowScoreOut(**row.to_dict()) for row in scores],
+        rows=[
+            RowScoreOut(
+                question=row.question,
+                answer=row.answer,
+                retrieved_contexts=row.retrieved_contexts,
+                ground_truth=row.ground_truth,
+                metrics=row.metrics,
+                error=redact_error(row.error, run.adapter_config),
+            )
+            for row in scores
+        ],
     )
 
 

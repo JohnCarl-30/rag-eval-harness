@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The HTTP adapter treats a blank `answer` as a row error.
+- HTTP adapter row errors no longer include the SUT URL. API responses redact tokens and strip userinfo, query, and fragment from adapter URLs.
 - Empty `DATABASE_URL` (GitHub Actions passes `""` when the input is unset) is treated as the default SQLite file. The consumer Action was failing `create_engine` on every CI run.
 - README and SECURITY still talked as if the GitHub repository did not exist.
 

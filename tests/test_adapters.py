@@ -38,8 +38,45 @@ def test_http_adapter_success_and_row_error() -> None:
     assert out[0].answer == "ok"
     assert out[0].retrieved_contexts == ["ctx"]
     assert out[0].ground_truth == "gt"
-    assert out[1].error is not None
-    assert "500" in out[1].error or "http adapter" in out[1].error
+    assert out[1].error == "http adapter: HTTP 500"
+
+
+def test_http_adapter_row_error_omits_url() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, json={"detail": "nope"})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    url = "https://rag.example/query?api_key=SUPERSECRET"
+    out = HttpAdapter(url, timeout=1.0, client=client).run([EvalRow(question="q")])
+    assert out[0].error == "http adapter: HTTP 500"
+    assert "SUPERSECRET" not in (out[0].error or "")
+    assert "rag.example" not in (out[0].error or "")
+
+
+def test_http_adapter_timeout() -> None:
+    import threading
+    import time
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Slow(BaseHTTPRequestHandler):
+        def do_POST(self) -> None:  # noqa: N802
+            time.sleep(1.0)
+            self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), Slow)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        url = f"http://127.0.0.1:{server.server_address[1]}/query"
+        out = HttpAdapter(url, timeout=0.2).run([EvalRow(question="q")])
+        assert out[0].error == "http adapter: timeout"
+        assert "127.0.0.1" not in (out[0].error or "")
+    finally:
+        server.shutdown()
 
 
 def test_http_adapter_sends_bearer(monkeypatch) -> None:
@@ -56,3 +93,13 @@ def test_http_adapter_sends_bearer(monkeypatch) -> None:
     assert seen["authorization"] == "Bearer abc"
     assert out[0].answer == "alias"
     assert out[0].retrieved_contexts == ["one", "two"]
+
+
+def test_http_adapter_rejects_blank_answer() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"answer": "  ", "retrieved_contexts": ["ctx"]})
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    out = HttpAdapter("https://rag.example/query", client=client).run([EvalRow(question="q")])
+
+    assert out[0].error == "http adapter: ValueError"

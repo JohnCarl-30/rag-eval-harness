@@ -44,7 +44,7 @@ and respond:
 {"answer": "…", "retrieved_contexts": ["…"]}
 ```
 
-`response` / `contexts` aliases are accepted. Each row has its own timeout (CLI `--timeout`, API `timeout_seconds`). HTTP 4xx/5xx, timeouts, and malformed JSON become row errors.
+`response` / `contexts` aliases are accepted. Each row has its own timeout (CLI `--timeout`, API `timeout_seconds`). HTTP 4xx/5xx, timeouts, and malformed JSON become row errors. Those error strings omit the SUT URL, so a query token in `--sut-url` does not land in the store.
 
 ```bash
 rag-eval eval golden.csv \

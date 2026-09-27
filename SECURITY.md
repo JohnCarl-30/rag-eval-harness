@@ -20,6 +20,9 @@ You should receive an acknowledgement within 7 days. Prefer GitHub private vulne
 
 ## Notes for operators
 
-- Bind loopback (`127.0.0.1`) for local use; set `RAG_EVAL_API_KEY` whenever the API listens on a non-loopback address
-- Treat SUT bearer tokens and OpenAI keys as secrets; the API redacts adapter tokens in responses
-- The stub evaluator does not call a model and does not need `OPENAI_API_KEY`
+- Bind loopback (`127.0.0.1`) for local use. Set `RAG_EVAL_API_KEY` whenever the API listens on a non-loopback address.
+- A dataset is capped at 100 rows. Ten thousand rows would need a worker queue this project will not add.
+- Treat SUT bearer tokens and OpenAI keys as secrets. The API redacts adapter tokens and strips userinfo, query, and fragment from SUT URLs in responses.
+- HTTP row errors are short codes (timeout, HTTP status, exception class). They do not include the request URL.
+- Each HTTP row has its own timeout (default 30s). A hung SUT becomes a row error, not a hung process.
+- The stub evaluator does not call a model and does not need `OPENAI_API_KEY`.
