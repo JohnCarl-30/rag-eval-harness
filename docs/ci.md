@@ -40,8 +40,35 @@ Inputs:
 | `extra` | | e.g. `[ragas]` |
 | `openai-api-key` | | Passed through for the ragas evaluator |
 | `python-version` | `3.12` | |
+| `comment` | `false` | `"true"` posts the report as one PR comment, edited on each push |
+| `github-token` | `github.token` | Needs `pull-requests: write` for `comment` |
+| `investigate` | `false` | `"true"` runs `rag-eval investigate` instead of `regress`; installs `[agent]` when `extra` is empty |
+| `agent-model` | | Pydantic AI model string, e.g. `anthropic:claude-sonnet-5`. Default `openai-chat:$OPENAI_MODEL` |
+| `anthropic-api-key` | | For `anthropic:*` agent models |
 
-The action runs `rag-eval eval` then, if `baseline` is set, `rag-eval regress` (exit 1 on drop).
+The action runs `rag-eval eval` then, if `baseline` is set, `rag-eval regress` (exit 1 on drop). The gate's Markdown report goes to the job summary every time; outputs `passed` and `report` expose the result to later steps.
+
+### Report on the pull request
+
+Needs v0.3.0 or later.
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+steps:
+  - uses: actions/checkout@v4
+  - uses: JohnCarl-30/rag-eval-harness@v0.3.0
+    with:
+      traces: tests/golden/traces.jsonl
+      evaluator: lexical
+      baseline: tests/golden/baseline.json
+      comment: "true"
+      investigate: "true"                     # explain a failure with the agents
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+```
+
+The comment is one per PR: later pushes edit it instead of stacking new ones. With `investigate`, a failed gate adds *Why the gate failed*: the stage that broke, the rows that show it, and a fix to try. The job still fails on the gate alone; a model error leaves the table and a one-line note. Fork PRs get a read-only token, so the comment step warns and moves on; the job summary still has the report.
 
 Commit a snapshot from a known-good run as `baseline.json`:
 
