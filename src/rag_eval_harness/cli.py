@@ -85,6 +85,17 @@ def _print_report(report: RegressionReport) -> None:
     _print_errors(report)
 
 
+def _write_report(
+    path: Path | None, report: RegressionReport, explanation: str | None = None
+) -> None:
+    if path is None:
+        return
+    from rag_eval_harness.regression.markdown import gate_markdown
+
+    path.write_text(gate_markdown(report, explanation=explanation), encoding="utf-8")
+    typer.echo(f"Wrote report {path}")
+
+
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(__version__)
@@ -209,6 +220,10 @@ def regress(
         float,
         typer.Option("--threshold", help="Fail if any mean drops by more than this."),
     ] = DEFAULT_THRESHOLD,
+    report_path: Annotated[
+        Path | None,
+        typer.Option("--report", help="Write the result as Markdown (job summary, PR comment)."),
+    ] = None,
     db: DbOption = None,
 ) -> None:
     """Compare mean metrics. Exit 1 if any mean drops by more than --threshold
@@ -232,6 +247,7 @@ def regress(
         head_errors=h_errors,
     )
     _print_report(report)
+    _write_report(report_path, report)
     if not report.passed:
         typer.echo("Regression detected.", err=True)
         raise typer.Exit(1)
@@ -342,6 +358,10 @@ def investigate(
         bool,
         typer.Option("--otel", help="Send spans via Logfire / OTLP. Needs the trace extra."),
     ] = False,
+    report_path: Annotated[
+        Path | None,
+        typer.Option("--report", help="Write the result as Markdown (job summary, PR comment)."),
+    ] = None,
     db: DbOption = None,
 ) -> None:
     """Run the regress gate, then have agents explain a failure. Exit code matches regress."""
@@ -385,6 +405,7 @@ def investigate(
     )
     _print_report(report)
     if report.passed:
+        _write_report(report_path, report)
         typer.echo("No regression. Nothing to investigate.")
         return
     model_name = model or f"openai-chat:{get_settings().openai_model}"
@@ -405,6 +426,7 @@ def investigate(
     except Exception as exc:
         # The gate already failed. A broken model call must not turn that into a pass.
         typer.echo(f"Investigation failed: {exc}", err=True)
+        _write_report(report_path, report, f"Investigation failed: `{type(exc).__name__}`.")
         typer.echo("Regression detected.", err=True)
         raise typer.Exit(1) from exc
     finally:
@@ -413,6 +435,7 @@ def investigate(
             typer.echo(f"Wrote trace {trace}")
     typer.echo("")
     typer.echo(result.to_markdown())
+    _write_report(report_path, report, result.to_markdown())
     if output:
         output.write_text(json.dumps(result.to_dict(), indent=2), encoding="utf-8")
         typer.echo(f"Wrote {output}")

@@ -129,12 +129,14 @@ Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci
 `stub` is keyless CI smoke. Hashes look healthy on junk contexts. Use `lexical` for a real gate.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@v0.2.0
+- uses: JohnCarl-30/rag-eval-harness@v0.3.0
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical
     baseline: tests/golden/baseline.json
     threshold: "0.05"
+    comment: "true"          # post the gate table on the PR (needs pull-requests: write)
+    investigate: "true"      # and explain a failure (needs a model key)
 ```
 
 Public consumer: [Relaydesk](https://github.com/JohnCarl-30/relaydesk) fails PRs when Nimbus recall drops. See [docs/ci.md](docs/ci.md).

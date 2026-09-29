@@ -8,6 +8,9 @@ on:
 jobs:
   python:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -21,13 +24,20 @@ jobs:
         run: uv run pytest -q
       - name: Nimbus gate stays red
         run: ./scripts/demo.sh
-      - name: Consumer action (stub eval)
+      - name: Baseline for the consumer action
+        run: uv run rag-eval eval examples/dummy-rag/traces.jsonl --evaluator lexical -o "$RUNNER_TEMP/baseline.json"
+      - name: Consumer action (lexical gate, report, PR comment)
+        id: consumer
         uses: ./
         with:
           package: .
           traces: examples/dummy-rag/traces.jsonl
-          evaluator: stub
+          evaluator: lexical
+          baseline: ${{ runner.temp }}/baseline.json
           output: rag-eval-results.json
+          comment: "true"
+      - name: Consumer action reported a pass
+        run: test "${{ steps.consumer.outputs.passed }}" = "true" && test -s "${{ steps.consumer.outputs.report }}"
 
   web:
     runs-on: ubuntu-latest

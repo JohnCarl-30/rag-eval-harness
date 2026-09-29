@@ -116,7 +116,13 @@ class Investigation:
                 "The gate failed, but no row dropped on the failing metrics. "
                 "Check row errors with `rag-eval diff`."
             )
-        lines = ["## Why the gate failed", "", self.summary.headline, "", self.summary.likely_cause]
+        lines = [
+            "### Why the gate failed",
+            "",
+            self.summary.headline,
+            "",
+            self.summary.likely_cause,
+        ]
         for finding in self.findings:
             group, diagnosis = finding.group, finding.diagnosis
             metrics = ", ".join(
@@ -125,7 +131,7 @@ class Investigation:
             questions = {row.index: row.question for row in group.rows}
             lines += [
                 "",
-                f"### {group.stage}: {metrics}",
+                f"#### {group.stage}: {metrics}",
                 "",
                 f"{diagnosis.suspected_cause} (confidence: {diagnosis.confidence})",
                 "",
@@ -135,7 +141,7 @@ class Investigation:
                 lines += ["", "Evidence:"]
                 lines += [f"- [{index}] {questions[index]}" for index in diagnosis.evidence_rows]
         if self.summary.next_steps:
-            lines += ["", "### Next steps", ""]
+            lines += ["", "#### Next steps", ""]
             lines += [f"{n}. {step}" for n, step in enumerate(self.summary.next_steps, start=1)]
         return "\n".join(lines)
 

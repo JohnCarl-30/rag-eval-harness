@@ -205,3 +205,49 @@ def test_cli_investigate_model_failure_still_exits_1(monkeypatch) -> None:
     assert result.exit_code == 1, result.output
     assert "Investigation failed:" in result.output
     assert "Regression detected." in result.output
+
+
+def test_cli_investigate_report_includes_explanation(tmp_path) -> None:
+    fake = FakeModel([_diagnosis([31])])
+    out = tmp_path / "report.md"
+    with diagnoser.override(model=fake.model), synthesizer.override(model=fake.model):
+        result = runner.invoke(
+            app,
+            [
+                "investigate",
+                "--baseline",
+                str(NIMBUS / "baseline.json"),
+                "--head",
+                str(NIMBUS / "weak.json"),
+                "--report",
+                str(out),
+            ],
+        )
+    assert result.exit_code == 1, result.output
+    text = out.read_text()
+    assert text.startswith("### rag-eval: ❌ Regression detected")
+    assert "### Why the gate failed" in text
+    assert "- [31] When does Export CSV email a link instead of downloading?" in text
+
+
+def test_cli_investigate_report_survives_model_failure(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    out = tmp_path / "report.md"
+    result = runner.invoke(
+        app,
+        [
+            "investigate",
+            "--baseline",
+            str(NIMBUS / "baseline.json"),
+            "--head",
+            str(NIMBUS / "weak.json"),
+            "--model",
+            "openai-chat:gpt-4o-mini",
+            "--report",
+            str(out),
+        ],
+    )
+    assert result.exit_code == 1, result.output
+    text = out.read_text()
+    assert "**FAIL**" in text
+    assert "Investigation failed: `UserError`." in text
