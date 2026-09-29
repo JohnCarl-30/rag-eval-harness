@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-29
+
 ### Added
 
 - `recall_at_k` and `mrr` retrieval metrics in the `lexical` and `ragas` evaluators. Relevance comes from a new optional `reference_contexts` column (alias `relevant_contexts`), or, without labels, from passages holding at least half the ground-truth tokens. On Nimbus: recall_at_k 0.90 to 0.70, mrr 0.82 to 0.70 for the weak retriever. See [metrics](docs/metrics.md#retrieval-metrics).

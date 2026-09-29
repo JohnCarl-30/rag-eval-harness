@@ -17,7 +17,7 @@ From a checkout of this repository:
 From another repo, after this project is tagged. `stub` is smoke. Use `lexical` when the gate should mean overlap, not hashes.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@v0.2.0
+- uses: JohnCarl-30/rag-eval-harness@v0.3.0
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical
