@@ -9,6 +9,8 @@
 
 A regression gate for RAG pipelines. Score a golden set, keep every run, and fail CI when retrieval or answers slip against a tagged baseline. RAGAS with a memory and a diff view.
 
+![rag-eval regress failing on the Nimbus weak retriever: context_recall 0.880 to 0.740, FAIL](docs/demo.gif)
+
 ```text
 $ rag-eval regress --baseline examples/nimbus/baseline.json --head examples/nimbus/weak.json
 threshold: 0.05
