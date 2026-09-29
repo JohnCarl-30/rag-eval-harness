@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import re
-
+from rag_eval_harness.evaluators.retrieval import retrieval_metrics
+from rag_eval_harness.evaluators.tokens import overlap, tokenize
 from rag_eval_harness.types import (
     METRIC_ANSWER_RELEVANCY,
     METRIC_CONTEXT_PRECISION,
@@ -12,54 +12,6 @@ from rag_eval_harness.types import (
     RowScore,
     compute_means,
 )
-
-_TOKEN = re.compile(r"[a-z0-9]+")
-_STOP = frozenset(
-    {
-        "the",
-        "and",
-        "for",
-        "are",
-        "but",
-        "not",
-        "you",
-        "all",
-        "can",
-        "our",
-        "how",
-        "what",
-        "when",
-        "does",
-        "with",
-        "from",
-        "this",
-        "that",
-        "have",
-        "has",
-        "was",
-        "into",
-        "your",
-        "about",
-        "a",
-        "an",
-        "to",
-        "of",
-        "in",
-        "on",
-        "is",
-        "or",
-    }
-)
-
-
-def tokenize(text: str) -> set[str]:
-    return {tok for tok in _TOKEN.findall(text.lower()) if tok not in _STOP and len(tok) > 1}
-
-
-def overlap(numerator: set[str], denominator: set[str]) -> float:
-    if not denominator:
-        return 0.0
-    return round(len(numerator & denominator) / len(denominator), 4)
 
 
 class LexicalEvaluator:
@@ -93,6 +45,7 @@ class LexicalEvaluator:
                 gt_toks = tokenize(row.ground_truth or "")
                 metrics[METRIC_CONTEXT_PRECISION] = overlap(gt_toks, context_toks)
                 metrics[METRIC_CONTEXT_RECALL] = overlap(context_toks, gt_toks)
+            metrics.update(retrieval_metrics(row))
             scored.append(
                 RowScore(
                     question=row.question,

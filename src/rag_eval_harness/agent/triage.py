@@ -14,6 +14,8 @@ from rag_eval_harness.types import (
     METRIC_CONTEXT_PRECISION,
     METRIC_CONTEXT_RECALL,
     METRIC_FAITHFULNESS,
+    METRIC_MRR,
+    METRIC_RECALL_AT_K,
     RowScore,
 )
 
@@ -22,6 +24,8 @@ Stage = Literal["retrieval", "generation", "other"]
 STAGE_BY_METRIC: dict[str, Stage] = {
     METRIC_CONTEXT_RECALL: "retrieval",
     METRIC_CONTEXT_PRECISION: "retrieval",
+    METRIC_RECALL_AT_K: "retrieval",
+    METRIC_MRR: "retrieval",
     METRIC_FAITHFULNESS: "generation",
     METRIC_ANSWER_RELEVANCY: "generation",
 }

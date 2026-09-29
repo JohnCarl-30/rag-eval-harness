@@ -35,6 +35,9 @@ class DatasetRow(Base):
     ground_truth: Mapped[str | None] = mapped_column(Text, nullable=True)
     answer: Mapped[str | None] = mapped_column(Text, nullable=True)
     retrieved_contexts: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    # Added after 0.2.0; Store adds them to older databases on startup.
+    abstained: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
+    reference_contexts: Mapped[list[str] | None] = mapped_column(JSON, nullable=True, default=list)
 
     dataset: Mapped[Dataset] = relationship(back_populates="rows")
 

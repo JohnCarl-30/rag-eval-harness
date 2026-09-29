@@ -74,6 +74,7 @@ class HttpAdapter:
                             retrieved_contexts=contexts,
                             ground_truth=row.ground_truth,
                             abstained=abstained,
+                            reference_contexts=row.reference_contexts,
                         )
                     )
                 except Exception as exc:  # noqa: BLE001 — per-row failure must not abort the run
@@ -84,6 +85,7 @@ class HttpAdapter:
                             retrieved_contexts=row.retrieved_contexts,
                             ground_truth=row.ground_truth,
                             error=_row_error(exc),
+                            reference_contexts=row.reference_contexts,
                         )
                     )
             return out

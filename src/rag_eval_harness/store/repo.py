@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, selectinload, sessionmaker
 
@@ -28,7 +28,33 @@ def make_engine(url: str) -> Engine:
 
 
 def _row_key(row: EvalRow) -> tuple[Any, ...]:
-    return (row.question, row.ground_truth, row.answer, tuple(row.retrieved_contexts))
+    return (
+        row.question,
+        row.ground_truth,
+        row.answer,
+        tuple(row.retrieved_contexts),
+        row.abstained,
+        tuple(row.reference_contexts),
+    )
+
+
+# Columns added to existing tables after release. create_all only creates missing
+# tables, so older databases get these through ALTER TABLE on startup.
+_ADDED_COLUMNS: dict[str, dict[str, str]] = {
+    "dataset_rows": {"abstained": "BOOLEAN", "reference_contexts": "JSON"},
+}
+
+
+def _add_missing_columns(engine: Engine) -> None:
+    inspector = inspect(engine)
+    for table, columns in _ADDED_COLUMNS.items():
+        if not inspector.has_table(table):
+            continue
+        existing = {column["name"] for column in inspector.get_columns(table)}
+        with engine.begin() as connection:
+            for name, sql_type in columns.items():
+                if name not in existing:
+                    connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {sql_type}"))
 
 
 class Store:
@@ -36,6 +62,7 @@ class Store:
         self.url = url
         self.engine = make_engine(url)
         Base.metadata.create_all(self.engine)
+        _add_missing_columns(self.engine)
         self._session_factory = sessionmaker(self.engine, expire_on_commit=False, future=True)
 
     def session(self) -> Session:
@@ -66,6 +93,8 @@ class Store:
                         ground_truth=row.ground_truth,
                         answer=row.answer,
                         retrieved_contexts=row.retrieved_contexts,
+                        abstained=row.abstained,
+                        reference_contexts=row.reference_contexts,
                     )
                 )
             session.commit()
@@ -111,6 +140,8 @@ class Store:
                     answer=record.answer,
                     retrieved_contexts=list(record.retrieved_contexts or []),
                     ground_truth=record.ground_truth,
+                    abstained=bool(record.abstained),
+                    reference_contexts=list(record.reference_contexts or []),
                 )
                 for record in records
             ]

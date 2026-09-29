@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import Any
 
 from rag_eval_harness.config import get_settings
+from rag_eval_harness.evaluators.retrieval import retrieval_metrics
 from rag_eval_harness.types import (
     METRIC_ANSWER_RELEVANCY,
     METRIC_CONTEXT_PRECISION,
@@ -147,6 +148,9 @@ class RagasEvaluator:
                 errors.append(f"{name}: {exc}")
         # An abstained row without ground truth has nothing to score; that is not an error.
         error = None if scores or not wanted else ("; ".join(errors) or "ragas scoring failed")
+        if error is None:
+            # Deterministic and free, so they ride along; never used to mask a judge failure.
+            scores.update(retrieval_metrics(row))
         return RowScore(
             question=row.question,
             answer=row.answer,

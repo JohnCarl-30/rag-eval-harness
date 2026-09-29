@@ -103,7 +103,7 @@ rag-eval serve
 | --- | --- |
 | Columns | `question` required. Optional `ground_truth`. Traces also need `answer` and `retrieved_contexts` (JSON list or `\|` / newline delimited). Aliases: `user_input`, `reference`, `response`, `contexts`. |
 | HTTP SUT | `POST {"question"}` → `{"answer","retrieved_contexts"}`. Optional bearer. Per-row timeout; a failed row is an error, the run continues. |
-| Metrics | Always faithfulness + answer relevancy. Context precision + context recall when `ground_truth` is present. |
+| Metrics | Always faithfulness + answer relevancy. Context precision + context recall when `ground_truth` is present. `lexical` and `ragas` add keyless `recall_at_k` and `mrr` from `reference_contexts` labels or ground truth ([details](docs/metrics.md#retrieval-metrics)). |
 | Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context, use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |

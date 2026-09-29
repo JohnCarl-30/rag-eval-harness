@@ -12,11 +12,40 @@ When any row has `ground_truth` / `reference`:
 - **context_precision**
 - **context_recall**
 
-Rows without ground truth omit the context metrics. Means are the average over successful rows only. If every row errors, required means are `0.0`.
+With `lexical` or `ragas`, when a row has `reference_contexts` labels or ground truth:
+
+- **recall_at_k**
+- **mrr**
+
+See [Retrieval metrics](#retrieval-metrics). Rows without ground truth omit the context metrics. Means are the average over successful rows only. If every row errors, required means are `0.0`.
 
 ### Abstained rows
 
 A row marked `abstained` (alias `escalated`) omits faithfulness and answer relevancy; context metrics still apply. A refusal like "I don't have that in the help center" shares no words with the retrieved articles, so lexical faithfulness scored every correct refusal near zero, and a pipeline that learned to refuse out-of-scope questions failed the gate. Quoting the wrong article instead scored high ([nimbus-judge.md](nimbus-judge.md)). Measure whether it should have refused with a separate escalation check, not with faithfulness.
+
+### Retrieval metrics
+
+Classic search metrics over the passages the pipeline returned, with `k` = however many it returned. No judge, no key, same result every run.
+
+- **recall_at_k**: share of the relevant passages that were retrieved.
+- **mrr**: 1 / rank of the first relevant passage. `1.0` means it came back first; `0.0` means it never came back.
+
+Which passages count as relevant:
+
+1. **Labels.** Add a `reference_contexts` column (alias `relevant_contexts`; a JSON list or `|`-delimited). A retrieved passage matches a label when it contains the label text, ignoring case and whitespace. Use an article title, a doc ID, or a sentence that only that passage has. Recall is labels found / labels.
+2. **Ground truth, when a row has no labels.** A passage counts when it holds at least half of the ground-truth tokens. Each row then has one implied relevant passage, so recall is `1.0` or `0.0`. This is a proxy: small chunks can each hold less than half the answer and read as misses, so label `reference_contexts` before trusting it on a chunked corpus.
+
+On the 40-row Nimbus snapshots, ground-truth mode, lexical evaluator:
+
+| Run | context_recall | recall_at_k | mrr |
+| --- | --- | --- | --- |
+| baseline | 0.880 | 0.900 | 0.817 |
+| weak retriever | 0.740 | 0.700 | 0.700 |
+| chunked | 0.782 | 0.700 | 0.617 |
+
+The weak retriever loses the right article on one question in five. Chunking returns it lower in the list.
+
+RAGAS adds these alongside its judge metrics, but only on rows the judge scored: a judge failure stays a row error.
 
 ## Stub evaluator
 

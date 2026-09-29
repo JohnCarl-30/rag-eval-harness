@@ -22,6 +22,8 @@ class TracesAdapter:
                         retrieved_contexts=row.retrieved_contexts,
                         ground_truth=row.ground_truth,
                         error="missing answer for traces adapter",
+                        abstained=row.abstained,
+                        reference_contexts=row.reference_contexts,
                     )
                 )
                 continue

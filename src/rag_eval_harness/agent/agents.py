@@ -23,7 +23,9 @@ Metrics (0 to 1, higher is better; scores come from an LLM judge or from token o
 - context_recall: how much of the ground truth the retrieved contexts support.
 - context_precision: how much of the retrieved context is relevant to the ground truth.
 - faithfulness: how much of the answer the retrieved contexts support.
-- answer_relevancy: how directly the answer addresses the question."""
+- answer_relevancy: how directly the answer addresses the question.
+- recall_at_k: share of the relevant passages that were retrieved at all.
+- mrr: 1 / rank of the first relevant passage (1.0 means it came back first)."""
 
 DIAGNOSER_INSTRUCTIONS = f"""\
 You diagnose one stage of a RAG regression. The same questions ran through a baseline

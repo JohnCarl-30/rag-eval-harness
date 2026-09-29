@@ -64,6 +64,7 @@ def record_to_row(record: Mapping[str, Any]) -> EvalRow | None:
         retrieved_contexts=parse_contexts(_pick(record, "retrieved_contexts")),
         ground_truth=None if ground_truth is None else str(ground_truth),
         abstained=is_truthy(_pick(record, "abstained")),
+        reference_contexts=parse_contexts(_pick(record, "reference_contexts")),
     )
 
 

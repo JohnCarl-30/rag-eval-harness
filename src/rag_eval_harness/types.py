@@ -9,9 +9,12 @@ METRIC_FAITHFULNESS = "faithfulness"
 METRIC_ANSWER_RELEVANCY = "answer_relevancy"
 METRIC_CONTEXT_PRECISION = "context_precision"
 METRIC_CONTEXT_RECALL = "context_recall"
+METRIC_RECALL_AT_K = "recall_at_k"
+METRIC_MRR = "mrr"
 
 ALWAYS_METRICS: tuple[str, ...] = (METRIC_FAITHFULNESS, METRIC_ANSWER_RELEVANCY)
 GROUND_TRUTH_METRICS: tuple[str, ...] = (METRIC_CONTEXT_PRECISION, METRIC_CONTEXT_RECALL)
+RETRIEVAL_METRICS: tuple[str, ...] = (METRIC_RECALL_AT_K, METRIC_MRR)
 
 RunStatus = Literal["queued", "running", "completed", "failed"]
 AdapterType = Literal["traces", "http"]
@@ -23,6 +26,7 @@ COLUMN_ALIASES: dict[str, tuple[str, ...]] = {
     "answer": ("answer", "response"),
     "retrieved_contexts": ("retrieved_contexts", "contexts"),
     "abstained": ("abstained", "escalated"),
+    "reference_contexts": ("reference_contexts", "relevant_contexts"),
 }
 
 
@@ -36,6 +40,9 @@ class EvalRow:
     # The SUT declined to answer (refused, or handed off to a human). Answer
     # metrics are skipped: a refusal is neither grounded nor ungrounded.
     abstained: bool = False
+    # Labels for which passages count as relevant: a retrieved context matches when it
+    # contains one of these (an article title, a doc ID). Drives recall_at_k and mrr.
+    reference_contexts: list[str] = field(default_factory=list)
 
     def has_ground_truth(self) -> bool:
         return bool(self.ground_truth and self.ground_truth.strip())
