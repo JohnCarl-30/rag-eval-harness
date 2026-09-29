@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The HTTP adapter treats a blank `answer` as a row error.
 - HTTP adapter row errors no longer include the SUT URL. API responses redact tokens and strip userinfo, query, and fragment from adapter URLs.
 
-## [0.1.1] - 2026-09-26
+## [0.1.1] - 2026-09-26 (never tagged; shipped in 0.2.0)
 
 Upgrade from 0.1.0: it serves any file on disk to unauthenticated requests when `web/dist` is present (the Docker image), and allows every origin via CORS.
 
