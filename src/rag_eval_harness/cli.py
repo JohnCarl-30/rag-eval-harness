@@ -295,21 +295,47 @@ def investigate(
             help="Pydantic AI model string. Default: openai-chat:$OPENAI_MODEL.",
         ),
     ] = None,
+    mode: Annotated[
+        str,
+        typer.Option(
+            "--mode",
+            help="workflow: fixed triage/diagnose/summarize graph. "
+            "supervisor: one agent picks its own tools.",
+        ),
+    ] = "workflow",
     output: Annotated[
         Path | None,
         typer.Option("--output", "-o", help="Write the investigation as JSON."),
     ] = None,
+    trace: Annotated[
+        Path | None,
+        typer.Option("--trace", help="Write every agent run (messages, tools, tokens) as JSON."),
+    ] = None,
+    otel: Annotated[
+        bool,
+        typer.Option("--otel", help="Send spans via Logfire / OTLP. Needs the trace extra."),
+    ] = False,
     db: DbOption = None,
 ) -> None:
     """Run the regress gate, then have agents explain a failure. Exit code matches regress."""
+    if mode not in ("workflow", "supervisor"):
+        typer.echo(f"Unknown --mode {mode!r}. Use 'workflow' or 'supervisor'.", err=True)
+        raise typer.Exit(2)
     try:
         from rag_eval_harness.agent.graph import investigate as run_investigation
+        from rag_eval_harness.agent.trace import TraceRecorder, enable_otel
     except ImportError as exc:
         typer.echo(
             "The agent extra is not installed. Run: pip install 'rag-eval-harness[agent]'",
             err=True,
         )
         raise typer.Exit(2) from exc
+    if otel:
+        try:
+            enable_otel()
+        except RuntimeError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(2) from exc
     store = _store(db)
     try:
         b_ref, b_means = load_means_ref(baseline_ref, store)
@@ -331,16 +357,29 @@ def investigate(
         typer.echo("No regression. Nothing to investigate.")
         return
     model_name = model or f"openai-chat:{get_settings().openai_model}"
-    typer.echo(f"Investigating with {model_name}...")
+    typer.echo(f"Investigating ({mode}) with {model_name}...")
+    recorder = TraceRecorder()
     try:
         result = asyncio.run(
-            run_investigation(report, b_rows, h_rows, model=model_name, limit=limit)
+            run_investigation(
+                report,
+                b_rows,
+                h_rows,
+                model=model_name,
+                limit=limit,
+                mode=mode,
+                recorder=recorder,
+            )
         )
     except Exception as exc:
         # The gate already failed. A broken model call must not turn that into a pass.
         typer.echo(f"Investigation failed: {exc}", err=True)
         typer.echo("Regression detected.", err=True)
         raise typer.Exit(1) from exc
+    finally:
+        if trace:
+            trace.write_text(json.dumps(recorder.to_dict(), indent=2), encoding="utf-8")
+            typer.echo(f"Wrote trace {trace}")
     typer.echo("")
     typer.echo(result.to_markdown())
     if output:

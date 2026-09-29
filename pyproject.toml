@@ -49,6 +49,9 @@ agent = [
     "langgraph>=1.2.2",
     "pydantic-ai-slim[anthropic,openai]>=2.51.0",
 ]
+trace = [
+    "logfire>=5.1.1",
+]
 
 [project.scripts]
 rag-eval = "rag_eval_harness.cli:app"

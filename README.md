@@ -68,12 +68,13 @@ rag-eval baseline <run-id>
 rag-eval regress --baseline <run-id-or.json> --head <run-id-or.json> --threshold 0.05
 rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json>
 rag-eval investigate --baseline <run-id-or.json> --head <run-id-or.json>   # needs [agent]
+rag-eval investigate ... --mode supervisor --trace trace.json
 rag-eval serve
 ```
 
 `regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`). `diff` prints the same means plus the worst per-row drops and always exits 0 on a successful compare.
 
-`investigate` runs the `regress` gate, then a LangGraph fan-out of Pydantic AI agents explains a failure: one diagnosis per failing stage (retrieval, generation), then a summary. Same exit codes as `regress`. Install with `pip install 'rag-eval-harness[agent]'`. See [docs/agent.md](docs/agent.md).
+`investigate` runs the `regress` gate, then a LangGraph fan-out of Pydantic AI agents explains a failure: one diagnosis per failing stage (retrieval, generation), then a summary. `--mode supervisor` swaps the fixed graph for one agent that picks its own tools. `--trace` writes every agent run as JSON; `--otel` sends spans via Logfire. Same exit codes as `regress`. Install with `pip install 'rag-eval-harness[agent]'`. See [docs/agent.md](docs/agent.md).
 
 ## Contracts
 

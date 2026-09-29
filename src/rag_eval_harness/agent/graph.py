@@ -2,19 +2,24 @@ from __future__ import annotations
 
 import operator
 from dataclasses import dataclass, field
-from typing import Annotated, Any, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from pydantic_ai.models import Model
 
 from rag_eval_harness.agent.agents import Finding, Summary, diagnose, summarize
+from rag_eval_harness.agent.supervisor import supervise
+from rag_eval_harness.agent.trace import TraceRecorder
 from rag_eval_harness.agent.triage import STAGE_ORDER, FailureGroup, triage
 from rag_eval_harness.regression.compare import RegressionReport
 from rag_eval_harness.types import RowScore
 
+Mode = Literal["workflow", "supervisor"]
+
 
 class InvestigationState(TypedDict, total=False):
+    mode: Mode
     report: RegressionReport
     baseline_rows: list[RowScore]
     head_rows: list[RowScore]
@@ -32,8 +37,16 @@ def _by_stage(findings: list[Finding]) -> list[Finding]:
     return sorted(findings, key=lambda finding: STAGE_ORDER.index(finding.group.stage))
 
 
-def build_graph(model: Model | str):
-    """triage -> one diagnose per failing stage, in parallel -> summarize."""
+def build_graph(model: Model | str, recorder: TraceRecorder | None = None):
+    """Two paths from START, picked by state["mode"].
+
+    workflow:   triage -> one diagnose per failing stage, in parallel -> summarize
+    supervisor: one agent that picks its own tools and delegates to the diagnoser
+    """
+    recorder = recorder or TraceRecorder()
+
+    def route(state: InvestigationState) -> str:
+        return "supervise" if state["mode"] == "supervisor" else "triage"
 
     def triage_node(state: InvestigationState) -> dict[str, Any]:
         groups = triage(
@@ -47,32 +60,49 @@ def build_graph(model: Model | str):
         return [Send("diagnose", {"group": group}) for group in state["groups"]]
 
     async def diagnose_node(task: DiagnoseTask) -> dict[str, Any]:
-        diagnosis = await diagnose(task["group"], model=model)
+        diagnosis = await diagnose(task["group"], model=model, recorder=recorder)
         return {"findings": [Finding(task["group"], diagnosis)]}
 
     async def summarize_node(state: InvestigationState) -> dict[str, Any]:
-        summary = await summarize(state["report"], _by_stage(state["findings"]), model=model)
+        summary = await summarize(
+            state["report"], _by_stage(state["findings"]), model=model, recorder=recorder
+        )
         return {"summary": summary}
+
+    async def supervise_node(state: InvestigationState) -> dict[str, Any]:
+        summary, findings = await supervise(
+            state["report"],
+            state["baseline_rows"],
+            state["head_rows"],
+            model=model,
+            limit=state["limit"],
+            recorder=recorder,
+        )
+        return {"summary": summary, "findings": findings}
 
     graph = StateGraph(InvestigationState)
     graph.add_node("triage", triage_node)
     graph.add_node("diagnose", diagnose_node)
     graph.add_node("summarize", summarize_node)
-    graph.add_edge(START, "triage")
+    graph.add_node("supervise", supervise_node)
+    graph.add_conditional_edges(START, route, ["triage", "supervise"])
     graph.add_conditional_edges("triage", fan_out, ["diagnose", END])
     graph.add_edge("diagnose", "summarize")
     graph.add_edge("summarize", END)
+    graph.add_edge("supervise", END)
     return graph.compile()
 
 
 @dataclass
 class Investigation:
     report: RegressionReport
+    mode: Mode = "workflow"
     findings: list[Finding] = field(default_factory=list)
     summary: Summary | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "mode": self.mode,
             "report": self.report.to_dict(),
             "findings": [finding.to_dict() for finding in self.findings],
             "summary": self.summary.model_dump() if self.summary else None,
@@ -81,7 +111,7 @@ class Investigation:
     def to_markdown(self) -> str:
         if self.report.passed:
             return "No regression. Nothing to investigate."
-        if not self.findings or self.summary is None:
+        if self.summary is None:
             return (
                 "The gate failed, but no row dropped on the failing metrics. "
                 "Check row errors with `rag-eval diff`."
@@ -117,12 +147,15 @@ async def investigate(
     *,
     model: Model | str,
     limit: int = 5,
+    mode: Mode = "workflow",
+    recorder: TraceRecorder | None = None,
 ) -> Investigation:
     """Explain a failed gate. A passing report returns without calling a model."""
     if report.passed:
-        return Investigation(report=report)
-    state = await build_graph(model).ainvoke(
+        return Investigation(report=report, mode=mode)
+    state = await build_graph(model, recorder).ainvoke(
         {
+            "mode": mode,
             "report": report,
             "baseline_rows": baseline_rows,
             "head_rows": head_rows,
@@ -132,6 +165,7 @@ async def investigate(
     )
     return Investigation(
         report=report,
+        mode=mode,
         findings=_by_stage(state.get("findings", [])),
         summary=state.get("summary"),
     )

@@ -67,7 +67,7 @@ class FailureGroup:
         }
 
 
-def _evidence(
+def row_evidence(
     index: int,
     baseline: RowScore,
     head: RowScore,
@@ -117,7 +117,9 @@ def triage(
                 per_row.setdefault(drop.index, {})[drop.metric] = (drop.baseline, drop.head)
                 worst[drop.index] = max(worst.get(drop.index, 0.0), drop.drop)
         ranked = sorted(worst, key=lambda index: (-worst[index], index))[:limit]
-        rows = [_evidence(index, baseline[index], head[index], per_row[index]) for index in ranked]
+        rows = [
+            row_evidence(index, baseline[index], head[index], per_row[index]) for index in ranked
+        ]
         if rows:
             groups.append(FailureGroup(stage=stage, metrics=metrics, rows=rows))
     return groups

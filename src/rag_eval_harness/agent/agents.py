@@ -7,7 +7,9 @@ import pydantic_ai
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, ModelRetry, RunContext, UsageLimits
 from pydantic_ai.models import Model
+from pydantic_ai.usage import RunUsage
 
+from rag_eval_harness.agent.trace import TraceRecorder
 from rag_eval_harness.agent.triage import FailureGroup, RowEvidence
 from rag_eval_harness.regression.compare import RegressionReport
 
@@ -139,10 +141,26 @@ def render_findings(report: RegressionReport, findings: list[Finding]) -> str:
     return "\n\n".join(parts)
 
 
-async def diagnose(group: FailureGroup, *, model: Model | str) -> Diagnosis:
-    result = await diagnoser.run(
-        render_group(group), deps=group, model=model, usage_limits=USAGE_LIMITS
-    )
+async def diagnose(
+    group: FailureGroup,
+    *,
+    model: Model | str,
+    recorder: TraceRecorder | None = None,
+    usage: RunUsage | None = None,
+    usage_limits: UsageLimits | None = USAGE_LIMITS,
+) -> Diagnosis:
+    """Run the diagnoser. A delegating agent passes its own usage so one budget covers both."""
+    recorder = recorder or TraceRecorder()
+    start = TraceRecorder.counts(usage)
+    async with recorder.span("diagnoser", stage=group.stage, delegated=usage is not None) as entry:
+        result = await diagnoser.run(
+            render_group(group),
+            deps=group,
+            model=model,
+            usage=usage,
+            usage_limits=usage_limits,
+        )
+        recorder.finish(entry, result, start=start)
     return result.output
 
 
@@ -151,8 +169,12 @@ async def summarize(
     findings: list[Finding],
     *,
     model: Model | str,
+    recorder: TraceRecorder | None = None,
 ) -> Summary:
-    result = await synthesizer.run(
-        render_findings(report, findings), model=model, usage_limits=USAGE_LIMITS
-    )
+    recorder = recorder or TraceRecorder()
+    async with recorder.span("synthesizer") as entry:
+        result = await synthesizer.run(
+            render_findings(report, findings), model=model, usage_limits=USAGE_LIMITS
+        )
+        recorder.finish(entry, result)
     return result.output
