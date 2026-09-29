@@ -17,7 +17,7 @@ From a checkout of this repository:
 From another repo, after this project is tagged. `stub` is smoke. Use `lexical` when the gate should mean overlap, not hashes.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@v0.1.0
+- uses: JohnCarl-30/rag-eval-harness@v0.1.1
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical
@@ -65,7 +65,6 @@ Relaydesk (the support widget) runs its own gate: `eval/golden.csv` against `POS
 
 `pip install rag-eval-harness` stays a git URL until trusted publishing is on.
 
-1. Create a PyPI account and an empty project named `rag-eval-harness` (or let the first trusted upload create it).
-2. PyPI → Publishing → GitHub → repository `JohnCarl-30/rag-eval-harness`, workflow `release.yml`, environment `pypi`.
-3. In this GitHub repo: Settings → Environments → `pypi` (matches [`.github/workflows/release.yml`](../.github/workflows/release.yml)).
-4. Re-run the `v0.1.0` release workflow, or tag `v0.1.1`.
+1. The project does not exist on PyPI yet, so register a *pending* publisher: PyPI → Account → Publishing → Add a new pending publisher → GitHub. Project `rag-eval-harness`, owner `JohnCarl-30`, repository `rag-eval-harness`, workflow `release.yml`, environment `pypi`. The first trusted upload creates the project. Without this, the publish step fails with `invalid-publisher` (that is what happened to `v0.1.0`).
+2. In this GitHub repo: Settings → Environments → `pypi` (matches [`.github/workflows/release.yml`](../.github/workflows/release.yml)). It already exists.
+3. Bump `version` in `pyproject.toml`, move the CHANGELOG's Unreleased section under that version, then push a matching `v*` tag. The package version comes from `pyproject.toml`, not the tag.

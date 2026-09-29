@@ -7,7 +7,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
-from rag_eval_harness.types import COLUMN_ALIASES, ROW_CAP, EvalRow
+from rag_eval_harness.types import COLUMN_ALIASES, ROW_CAP, EvalRow, is_truthy
 
 
 class RowCapError(ValueError):
@@ -63,6 +63,7 @@ def record_to_row(record: Mapping[str, Any]) -> EvalRow | None:
         answer=None if answer is None else str(answer),
         retrieved_contexts=parse_contexts(_pick(record, "retrieved_contexts")),
         ground_truth=None if ground_truth is None else str(ground_truth),
+        abstained=is_truthy(_pick(record, "abstained")),
     )
 
 
@@ -123,6 +124,8 @@ def load_csv_text(text: str) -> list[EvalRow]:
 def load_text(text: str, *, filename: str = "upload.csv") -> list[EvalRow]:
     name = filename.lower()
     stripped = text.lstrip("\ufeff")
+    if not stripped.strip():
+        raise LoadError("File is empty.")
     if name.endswith(".jsonl") or name.endswith(".ndjson"):
         return load_jsonl_text(stripped)
     if name.endswith(".json"):

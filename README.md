@@ -72,7 +72,7 @@ rag-eval investigate ... --mode supervisor --trace trace.json
 rag-eval serve
 ```
 
-`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`). `diff` prints the same means plus the worst per-row drops and always exits 0 on a successful compare.
+`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`), or if head has more errored rows than baseline (means skip errored rows, so a timing-out SUT would otherwise pass). `diff` prints the same means plus the worst per-row drops (rows paired by question) and always exits 0 on a successful compare.
 
 `investigate` runs the `regress` gate, then a LangGraph fan-out of Pydantic AI agents explains a failure: one diagnosis per failing stage (retrieval, generation), then a summary. `--mode supervisor` swaps the fixed graph for one agent that picks its own tools. `--trace` writes every agent run as JSON; `--otel` sends spans via Logfire. Same exit codes as `regress`. Install with `pip install 'rag-eval-harness[agent]'`. See [docs/agent.md](docs/agent.md).
 
@@ -86,7 +86,7 @@ rag-eval serve
 | Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context, use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
-| Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. |
+| Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. No cross-origin access unless `RAG_EVAL_CORS_ORIGINS` lists origins (comma-separated). |
 | Regression | Tag a run as baseline. Gate on **mean** delta. Per-row diffs are UI-only. |
 
 Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [investigator](docs/agent.md) · [storage](docs/storage.md) · [Nimbus case study](docs/nimbus-case-study.md) · [Chunking case study](docs/nimbus-chunking.md) · [Cost and p95](docs/nimbus-cost.md) · [Lexical vs judge](docs/nimbus-judge.md)
@@ -96,7 +96,7 @@ Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci
 `stub` is keyless CI smoke. Hashes look healthy on junk contexts. Use `lexical` for a real gate.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@v0.1.0
+- uses: JohnCarl-30/rag-eval-harness@v0.1.1
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical

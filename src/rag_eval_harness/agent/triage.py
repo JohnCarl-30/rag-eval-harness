@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from rag_eval_harness.regression.compare import MetricDelta, RegressionReport, worst_row_drops
+from rag_eval_harness.regression.compare import (
+    MetricDelta,
+    RegressionReport,
+    pair_rows,
+    worst_row_drops,
+)
 from rag_eval_harness.types import (
     METRIC_ANSWER_RELEVANCY,
     METRIC_CONTEXT_PRECISION,
@@ -98,7 +103,8 @@ def triage(
 ) -> list[FailureGroup]:
     """Group failing means by stage and attach the worst-dropping rows for each group.
 
-    Rows pair by index, the same as `rag-eval diff`. A stage with failing means but no
+    Rows pair by question, the same as `rag-eval diff`; a row index is its position in
+    `pair_rows`, which is the head row's position. A stage with failing means but no
     row that dropped is skipped, since there is nothing to show a model.
     """
     by_stage: dict[Stage, list[MetricDelta]] = {}
@@ -117,9 +123,8 @@ def triage(
                 per_row.setdefault(drop.index, {})[drop.metric] = (drop.baseline, drop.head)
                 worst[drop.index] = max(worst.get(drop.index, 0.0), drop.drop)
         ranked = sorted(worst, key=lambda index: (-worst[index], index))[:limit]
-        rows = [
-            row_evidence(index, baseline[index], head[index], per_row[index]) for index in ranked
-        ]
+        pairs = pair_rows(baseline, head)
+        rows = [row_evidence(index, *pairs[index], per_row[index]) for index in ranked]
         if rows:
             groups.append(FailureGroup(stage=stage, metrics=metrics, rows=rows))
     return groups

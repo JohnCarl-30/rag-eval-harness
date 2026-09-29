@@ -132,7 +132,7 @@ class RagasEvaluator:
             kwargs["reference"] = row.ground_truth
         scores: dict[str, float] = {}
         errors: list[str] = []
-        wanted = [METRIC_FAITHFULNESS, METRIC_ANSWER_RELEVANCY]
+        wanted = [] if row.abstained else [METRIC_FAITHFULNESS, METRIC_ANSWER_RELEVANCY]
         if row.has_ground_truth():
             wanted.extend([METRIC_CONTEXT_PRECISION, METRIC_CONTEXT_RECALL])
         for name in wanted:
@@ -145,7 +145,8 @@ class RagasEvaluator:
                 scores[name] = await _score_metric(metric, **call_kwargs)
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{name}: {exc}")
-        error = None if scores else ("; ".join(errors) or "ragas scoring failed")
+        # An abstained row without ground truth has nothing to score; that is not an error.
+        error = None if scores or not wanted else ("; ".join(errors) or "ragas scoring failed")
         return RowScore(
             question=row.question,
             answer=row.answer,

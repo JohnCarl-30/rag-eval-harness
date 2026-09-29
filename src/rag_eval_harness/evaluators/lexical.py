@@ -85,10 +85,10 @@ class LexicalEvaluator:
             answer_toks = tokenize(row.answer or "")
             question_toks = tokenize(row.question)
             context_toks = tokenize("\n".join(row.retrieved_contexts))
-            metrics = {
-                METRIC_FAITHFULNESS: overlap(context_toks, answer_toks),
-                METRIC_ANSWER_RELEVANCY: overlap(answer_toks, question_toks),
-            }
+            metrics: dict[str, float] = {}
+            if not row.abstained:
+                metrics[METRIC_FAITHFULNESS] = overlap(context_toks, answer_toks)
+                metrics[METRIC_ANSWER_RELEVANCY] = overlap(answer_toks, question_toks)
             if row.has_ground_truth():
                 gt_toks = tokenize(row.ground_truth or "")
                 metrics[METRIC_CONTEXT_PRECISION] = overlap(gt_toks, context_toks)

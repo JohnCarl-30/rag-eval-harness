@@ -52,3 +52,29 @@ def test_lexical_rewards_grounded_extractive_answers() -> None:
 
 def test_get_evaluator_lexical() -> None:
     assert get_evaluator("lexical").name == "lexical"
+
+
+def test_abstained_rows_skip_answer_metrics() -> None:
+    rows = [
+        EvalRow(
+            question="How many seats on Growth?",
+            answer="Growth includes 10 seats.",
+            retrieved_contexts=["Growth includes 10 seats and 10M events."],
+            ground_truth="Growth includes 10 seats.",
+        ),
+        EvalRow(
+            question="Can I pay with crypto?",
+            answer="I don't have that in the help center.",
+            retrieved_contexts=["Growth includes 10 seats and 10M events."],
+            ground_truth="I don't have that in the help center.",
+            abstained=True,
+        ),
+    ]
+    for evaluator in (LexicalEvaluator(), StubEvaluator()):
+        summary = evaluator.evaluate(rows)
+        refused = summary.rows[1].metrics
+        assert "faithfulness" not in refused
+        assert "answer_relevancy" not in refused
+        assert "context_recall" in refused
+        assert summary.means["faithfulness"] == summary.rows[0].metrics["faithfulness"]
+        assert summary.error_count == 0

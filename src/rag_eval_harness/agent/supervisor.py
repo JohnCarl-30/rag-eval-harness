@@ -9,7 +9,7 @@ from pydantic_ai.models import Model
 from rag_eval_harness.agent.agents import METRIC_GLOSSARY, Finding, Summary, diagnose
 from rag_eval_harness.agent.trace import TraceRecorder
 from rag_eval_harness.agent.triage import STAGE_BY_METRIC, Stage, row_evidence, triage
-from rag_eval_harness.regression.compare import RegressionReport, worst_row_drops
+from rag_eval_harness.regression.compare import RegressionReport, pair_rows, worst_row_drops
 from rag_eval_harness.types import RowScore
 
 # One budget for the supervisor and every diagnoser it delegates to.
@@ -91,11 +91,13 @@ def worst_rows(
 @supervisor.tool
 def row_detail(ctx: RunContext[SupervisorDeps], index: int) -> dict[str, Any]:
     """One row: question, ground truth, scores, both answers, and contexts head lost or gained."""
-    baseline, head = ctx.deps.baseline_rows, ctx.deps.head_rows
-    count = min(len(baseline), len(head))
-    if not 0 <= index < count:
-        raise ModelRetry(f"Row {index} does not exist. Use 0 to {count - 1}.")
-    left, right = baseline[index], head[index]
+    pairs = pair_rows(ctx.deps.baseline_rows, ctx.deps.head_rows)
+    if not 0 <= index < len(pairs):
+        raise ModelRetry(f"Row {index} does not exist. Use 0 to {len(pairs) - 1}.")
+    left, right = pairs[index]
+    if left is None or right is None:
+        side = "baseline" if left is None else "head"
+        raise ModelRetry(f"Row {index} has no {side} counterpart, so there is nothing to compare.")
     scores = {
         name: (left.metrics[name], right.metrics[name])
         for name in sorted(set(left.metrics) & set(right.metrics))

@@ -42,10 +42,10 @@ class StubEvaluator:
                 continue
             answer = row.answer or ""
             joined_contexts = "\n".join(row.retrieved_contexts)
-            metrics = {
-                METRIC_FAITHFULNESS: _stable_unit(f"faith|{answer}|{joined_contexts}"),
-                METRIC_ANSWER_RELEVANCY: _stable_unit(f"rel|{row.question}|{answer}"),
-            }
+            metrics: dict[str, float] = {}
+            if not row.abstained:
+                metrics[METRIC_FAITHFULNESS] = _stable_unit(f"faith|{answer}|{joined_contexts}")
+                metrics[METRIC_ANSWER_RELEVANCY] = _stable_unit(f"rel|{row.question}|{answer}")
             if row.has_ground_truth():
                 gt = row.ground_truth or ""
                 metrics[METRIC_CONTEXT_PRECISION] = _stable_unit(f"prec|{gt}|{joined_contexts}")

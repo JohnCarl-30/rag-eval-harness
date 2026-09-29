@@ -16,6 +16,7 @@ from rag_eval_harness.regression.compare import (
     DEFAULT_THRESHOLD,
     RegressionReport,
     compare_means,
+    load_errors_ref,
     load_means_ref,
     load_rows_ref,
     worst_row_drops,
@@ -61,6 +62,16 @@ def _print_run(run, summary=None) -> None:
         typer.echo(f"Error:      {run.error_message}")
 
 
+def _print_errors(report) -> None:
+    if report.baseline_errors is None or report.head_errors is None:
+        return
+    flag = "FAIL" if report.errors_increased else "ok"
+    typer.echo(
+        f"  {'errored rows':20} baseline={report.baseline_errors}  "
+        f"head={report.head_errors}  {flag}"
+    )
+
+
 def _print_report(report: RegressionReport) -> None:
     typer.echo(f"threshold: {report.threshold}")
     typer.echo(f"baseline:  {report.baseline_ref}")
@@ -71,6 +82,7 @@ def _print_report(report: RegressionReport) -> None:
             f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
             f"delta={item.delta:+.4f}  {flag}"
         )
+    _print_errors(report)
 
 
 def _version_callback(value: bool) -> None:
@@ -114,6 +126,9 @@ def serve(
         )
         raise typer.Exit(1)
 
+    stale = _store(None).fail_interrupted_runs()
+    if stale:
+        typer.echo(f"Marked {stale} interrupted run(s) as failed.", err=True)
     uvicorn.run(create_app(), host=bind_host, port=bind_port)
 
 
@@ -169,11 +184,14 @@ def baseline(
 ) -> None:
     """Mark a completed run as the baseline for its dataset."""
     store = _store(db)
-    try:
-        run = store.set_baseline(run_id)
-    except KeyError:
+    run = store.get_run(run_id)
+    if run is None:
         typer.echo(f"Run not found: {run_id}", err=True)
-        raise typer.Exit(2) from None
+        raise typer.Exit(2)
+    if run.status != "completed":
+        typer.echo(f"Only a completed run can be a baseline (status={run.status})", err=True)
+        raise typer.Exit(2)
+    run = store.set_baseline(run_id)
     typer.echo(f"Tagged {run.id} as baseline for dataset {run.dataset_id}")
 
 
@@ -193,11 +211,14 @@ def regress(
     ] = DEFAULT_THRESHOLD,
     db: DbOption = None,
 ) -> None:
-    """Compare mean metrics. Exit 1 if any mean drops by more than --threshold."""
+    """Compare mean metrics. Exit 1 if any mean drops by more than --threshold
+    or head has more errored rows than baseline."""
     store = _store(db)
     try:
         b_ref, b_means = load_means_ref(baseline_ref, store)
         h_ref, h_means = load_means_ref(head_ref, store)
+        b_errors = load_errors_ref(baseline_ref, store)
+        h_errors = load_errors_ref(head_ref, store)
     except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
@@ -207,6 +228,8 @@ def regress(
         threshold=threshold,
         baseline_ref=b_ref,
         head_ref=h_ref,
+        baseline_errors=b_errors,
+        head_errors=h_errors,
     )
     _print_report(report)
     if not report.passed:
@@ -241,6 +264,8 @@ def diff(
     try:
         b_ref, b_means = load_means_ref(baseline_ref, store)
         h_ref, h_means = load_means_ref(head_ref, store)
+        b_errors = load_errors_ref(baseline_ref, store)
+        h_errors = load_errors_ref(head_ref, store)
         _, b_rows = load_rows_ref(baseline_ref, store)
         _, h_rows = load_rows_ref(head_ref, store)
     except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
@@ -252,6 +277,8 @@ def diff(
         threshold=threshold,
         baseline_ref=b_ref,
         head_ref=h_ref,
+        baseline_errors=b_errors,
+        head_errors=h_errors,
     )
     _print_report(report)
     drops = worst_row_drops(b_rows, h_rows, metric=metric, limit=limit)
@@ -265,7 +292,7 @@ def diff(
             question = question[:77] + "..."
         typer.echo(
             f"  [{item.index}] {item.metric}  {item.baseline:.4f} -> {item.head:.4f}  "
-            f"({item.drop:+.4f})  {question}"
+            f"({-item.drop:+.4f})  {question}"
         )
 
 
@@ -342,6 +369,8 @@ def investigate(
         h_ref, h_means = load_means_ref(head_ref, store)
         _, b_rows = load_rows_ref(baseline_ref, store)
         _, h_rows = load_rows_ref(head_ref, store)
+        b_errors = load_errors_ref(baseline_ref, store)
+        h_errors = load_errors_ref(head_ref, store)
     except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
@@ -351,6 +380,8 @@ def investigate(
         threshold=threshold,
         baseline_ref=b_ref,
         head_ref=h_ref,
+        baseline_errors=b_errors,
+        head_errors=h_errors,
     )
     _print_report(report)
     if report.passed:

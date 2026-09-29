@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 
 from rag_eval_harness.cli import app
 from rag_eval_harness.engine import eval_from_path
+from rag_eval_harness.types import EvalRow
 
 runner = CliRunner()
 
@@ -118,6 +119,9 @@ def test_diff_lists_worst_row_drops(tmp_path, traces_jsonl, store) -> None:
     assert result.exit_code == 0, result.output
     assert "Worst per-row drops:" in result.output
     assert "faithfulness" in result.output
+    # A drop prints as a negative delta, like the mean table.
+    drop_lines = [line for line in result.output.splitlines() if "->" in line]
+    assert drop_lines and all("(-0." in line for line in drop_lines), result.output
 
 
 def test_version() -> None:
@@ -134,3 +138,28 @@ def test_serve_requires_key_off_loopback(monkeypatch) -> None:
     result = runner.invoke(app, ["serve", "--host", "0.0.0.0", "--port", "8000"])
     assert result.exit_code == 1
     assert "RAG_EVAL_API_KEY" in result.output
+
+
+def test_regress_fails_when_head_errors_more(tmp_path) -> None:
+    means = {"faithfulness": 0.8, "answer_relevancy": 0.8}
+    base = tmp_path / "base.json"
+    base.write_text(json.dumps({"means": means, "error_count": 0}), encoding="utf-8")
+    head = tmp_path / "head.json"
+    head.write_text(json.dumps({"means": means, "error_count": 15}), encoding="utf-8")
+    db_url = f"sqlite:///{tmp_path / 'cli.db'}"
+    result = runner.invoke(
+        app, ["regress", "--baseline", str(base), "--head", str(head), "--db", db_url]
+    )
+    assert result.exit_code == 1, result.output
+    assert "errored rows" in result.output
+    assert "Regression detected" in result.output
+
+
+def test_baseline_rejects_unfinished_run(store) -> None:
+    dataset = store.create_dataset([EvalRow(question="Q", answer="A")], name="d")
+    run = store.create_run(dataset_id=dataset.id, adapter_type="traces", evaluator="stub")
+    store.fail_run(run.id, "boom")
+    result = runner.invoke(app, ["baseline", run.id, "--db", store.url])
+    assert result.exit_code == 2
+    assert "completed" in result.output
+    assert store.get_run(run.id).is_baseline is False

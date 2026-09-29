@@ -87,3 +87,22 @@ def test_triage_clips_long_text() -> None:
     lost = groups[0].rows[0].lost_contexts[0]
     assert len(lost) == MAX_TEXT_CHARS
     assert lost.endswith("...")
+
+
+def test_triage_pairs_rows_by_question_when_head_is_reordered() -> None:
+    baseline = [
+        _row("q0", ["a"], context_recall=1.0),
+        _row("q1", ["b"], context_recall=1.0),
+    ]
+    head = [
+        _row("q1", ["b"], context_recall=1.0),
+        _row("q0", ["x"], context_recall=0.0),
+    ]
+
+    groups = triage(_report(baseline, head), baseline, head)
+
+    [row] = groups[0].rows
+    assert row.index == 1
+    assert row.question == "q0"
+    assert row.lost_contexts == ["a"]
+    assert row.gained_contexts == ["x"]
