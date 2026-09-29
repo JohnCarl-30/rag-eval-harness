@@ -1,14 +1,34 @@
 # rag-eval-harness
 
 [![CI](https://github.com/JohnCarl-30/rag-eval-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnCarl-30/rag-eval-harness/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/rag-eval-harness)](https://pypi.org/project/rag-eval-harness/)
+[![Python](https://img.shields.io/pypi/pyversions/rag-eval-harness)](https://pypi.org/project/rag-eval-harness/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-RAGAS with a memory and a diff view.
+**Your RAG got worse. Your tests stayed green.**
+
+A regression gate for RAG pipelines. Score a golden set, keep every run, and fail CI when retrieval or answers slip against a tagged baseline. RAGAS with a memory and a diff view.
+
+```text
+$ rag-eval regress --baseline examples/nimbus/baseline.json --head examples/nimbus/weak.json
+threshold: 0.05
+  answer_relevancy     baseline=0.6381  head=0.5985  delta=-0.0396  ok
+  context_precision    baseline=0.0634  head=0.1227  delta=+0.0592  ok
+  context_recall       baseline=0.8799  head=0.7399  delta=-0.1399  FAIL
+  faithfulness         baseline=0.7772  head=0.7542  delta=-0.0230  ok
+  errored rows         baseline=0  head=0  ok
+Regression detected.                                          # exit 1
+```
+
+```bash
+pip install rag-eval-harness
+```
+
+No API key needed: the `lexical` evaluator gates on token overlap, and `stub` runs keyless CI smoke. Add `[ragas]` for LLM-judge metrics or `[agent]` for `rag-eval investigate`, which explains why a gate failed.
 
 **What this proved:** a weaker retriever on a 40-question Nimbus help-center set cut mean **context recall from 0.880 to 0.740**. `rag-eval regress --threshold 0.05` exited **1**. Full write-up: [Nimbus case study](docs/nimbus-case-study.md). 90-second recording: `./scripts/demo.sh`.
 
 Chunking the same corpus doubled lexical precision and failed the recall gate. Production stayed on whole articles. [Chunking case study](docs/nimbus-chunking.md). `./scripts/demo-chunking.sh`.
-
-Upload a golden RAG dataset, run a pipeline (precomputed traces or HTTP), score with **RAGAS**, **lexical** overlap, or a keyless **stub** evaluator, persist runs, and fail CI when mean metrics drop versus a tagged baseline.
 
 This is not a RAG framework. There is no ingestion or retrieval stack. Evaluation orchestration is the product.
 
@@ -57,8 +77,9 @@ docker compose up --build
 ## Install
 
 ```bash
-pip install git+https://github.com/JohnCarl-30/rag-eval-harness.git
-pip install 'rag-eval-harness[ragas]'   # after a PyPI release, or: pip install '.[ragas]' from a clone
+pip install rag-eval-harness            # core: stub + lexical evaluators, store, gate, UI API
+pip install 'rag-eval-harness[ragas]'   # RAGAS judge metrics (OPENAI_API_KEY)
+pip install 'rag-eval-harness[agent]'   # rag-eval investigate
 ```
 
 ```bash
@@ -87,7 +108,19 @@ rag-eval serve
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
 | Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. No cross-origin access unless `RAG_EVAL_CORS_ORIGINS` lists origins (comma-separated). |
-| Regression | Tag a run as baseline. Gate on **mean** delta. Per-row diffs are UI-only. |
+| Regression | Tag a run as baseline. Gate on **mean** delta and errored-row count. Per-row drops show in `diff` and the UI; they never fail the gate. |
+
+## Why not DeepEval, promptfoo, or RAGAS?
+
+Use them. This sits next to them.
+
+| Tool | What it is | What this adds |
+| --- | --- | --- |
+| RAGAS | A metrics library: faithfulness, context recall, and more | Runs RAGAS as one evaluator, then stores the run, diffs it against a baseline, and gates CI on the delta |
+| DeepEval | pytest-style assertions with per-case thresholds | A gate on **change** versus a tagged baseline, not on absolute scores you have to tune |
+| promptfoo | Config-driven prompt and model comparison, red teaming | RAG-specific: retrieved contexts, ground truth, per-row retrieval drops |
+
+Two things the others do not ship: a keyless `lexical` gate (no judge model to drift or cost money in CI), and `investigate`, which reads the rows that dropped and tells you whether retrieval or generation broke.
 
 Docs: [adapters](docs/adapters.md) · [metrics](docs/metrics.md) · [CI](docs/ci.md) · [investigator](docs/agent.md) · [storage](docs/storage.md) · [Nimbus case study](docs/nimbus-case-study.md) · [Chunking case study](docs/nimbus-chunking.md) · [Cost and p95](docs/nimbus-cost.md) · [Lexical vs judge](docs/nimbus-judge.md)
 
