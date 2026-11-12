@@ -62,6 +62,8 @@ class RowScore:
     ground_truth: str | None
     metrics: dict[str, float]
     error: str | None = None
+    # Carried over from the EvalRow so the gate can count refusals.
+    abstained: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -71,6 +73,7 @@ class RowScore:
             "ground_truth": self.ground_truth,
             "metrics": self.metrics,
             "error": self.error,
+            "abstained": self.abstained,
         }
 
     @classmethod
@@ -82,7 +85,13 @@ class RowScore:
             ground_truth=data.get("ground_truth"),
             metrics={k: float(v) for k, v in (data.get("metrics") or {}).items()},
             error=data.get("error"),
+            abstained=is_truthy(data.get("abstained")),
         )
+
+
+def count_abstained(rows: list[RowScore]) -> int:
+    """Scored rows where the SUT declined to answer. Errored rows are counted as errors."""
+    return sum(1 for row in rows if row.abstained and not row.error)
 
 
 @dataclass
@@ -95,10 +104,15 @@ class MetricSummary:
     def row_count(self) -> int:
         return len(self.rows)
 
+    @property
+    def abstained_count(self) -> int:
+        return count_abstained(self.rows)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "means": self.means,
             "error_count": self.error_count,
+            "abstained_count": self.abstained_count,
             "row_count": self.row_count,
             "rows": [row.to_dict() for row in self.rows],
         }

@@ -37,6 +37,7 @@ class RunOut(BaseModel):
     is_baseline: bool
     means: dict[str, float] | None
     error_count: int
+    abstained_count: int | None = None
     created_at: str
     completed_at: str | None
 
@@ -48,6 +49,7 @@ class RowScoreOut(BaseModel):
     ground_truth: str | None
     metrics: dict[str, float]
     error: str | None
+    abstained: bool = False
 
 
 class RunDetailOut(RunOut):
@@ -60,4 +62,8 @@ class DiffOut(BaseModel):
     baseline: RunOut
     head: RunOut
     deltas: list[dict[str, Any]]
+    # Row-level gate checks: errored rows, abstained rows, questions covered.
+    checks: list[dict[str, Any]] = []
+    new_metrics: dict[str, float] = {}
+    warnings: list[str] = []
     rows: list[dict[str, Any]]

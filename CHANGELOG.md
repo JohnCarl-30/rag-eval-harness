@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A head that refused most answers passed the gate: abstained rows are left out of the answer means and nothing counted them. `regress` now fails when the share of abstained rows rises by more than `--threshold`. Runs and snapshots record `abstained` per row and an `abstained_count`; older databases gain the columns on startup, and the check is skipped against a snapshot or run from before this release.
+- A head that ran only some of the baseline's questions passed the gate. `regress` now fails when a baseline question has no row in head. Extra questions in head are still fine.
+- `regress` and `investigate` compared a `stub` baseline to a `lexical` or `ragas` head as if the scores meant the same thing. They now exit 2. `diff` and the UI keep working across evaluators and print a warning.
+- A metric missing from head was scored as `0.0`, so it passed when the baseline value was under the threshold. It now always fails and shows as `missing`. Metrics only head has are listed as `new, not gated` instead of being dropped from the table.
+
+### Changed
+
+- The diff API response adds `checks`, `new_metrics` and `warnings`; `passed` now reflects the abstained and coverage checks. Run responses add `abstained_count`, rows add `abstained`.
+
 ## [0.3.0] - 2026-09-29
 
 ### Added

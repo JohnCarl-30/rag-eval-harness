@@ -21,6 +21,7 @@ export type Run = {
   is_baseline: boolean;
   means: Record<string, number> | null;
   error_count: number;
+  abstained_count: number | null;
   created_at: string;
   completed_at: string | null;
 };
@@ -32,6 +33,7 @@ export type RowScore = {
   ground_truth: string | null;
   metrics: Record<string, number>;
   error: string | null;
+  abstained: boolean;
 };
 
 export type RunDetail = Run & { rows: RowScore[] };
@@ -47,7 +49,11 @@ export type DiffResponse = {
     head: number;
     delta: number;
     dropped: boolean;
+    missing: boolean;
   }>;
+  checks: Array<{ label: string; baseline: string; head: string; failed: boolean }>;
+  new_metrics: Record<string, number>;
+  warnings: string[];
   rows: Array<{
     index: number;
     question: string;

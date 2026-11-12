@@ -42,6 +42,8 @@ def _row_key(row: EvalRow) -> tuple[Any, ...]:
 # tables, so older databases get these through ALTER TABLE on startup.
 _ADDED_COLUMNS: dict[str, dict[str, str]] = {
     "dataset_rows": {"abstained": "BOOLEAN", "reference_contexts": "JSON"},
+    "runs": {"abstained_count": "INTEGER"},
+    "run_scores": {"abstained": "BOOLEAN"},
 }
 
 
@@ -204,6 +206,7 @@ class Store:
             run.status = "completed"
             run.means = summary.means
             run.error_count = summary.error_count
+            run.abstained_count = summary.abstained_count
             run.completed_at = _utcnow()
             run.error_message = None
             for index, row in enumerate(summary.rows):
@@ -218,6 +221,7 @@ class Store:
                         ground_truth=row.ground_truth,
                         metrics=row.metrics,
                         error=row.error,
+                        abstained=row.abstained,
                     )
                 )
             session.commit()
@@ -281,6 +285,7 @@ class Store:
                     ground_truth=record.ground_truth,
                     metrics=dict(record.metrics or {}),
                     error=record.error,
+                    abstained=bool(record.abstained),
                 )
                 for record in records
             ]
@@ -299,5 +304,7 @@ class Store:
             "status": run.status,
             "means": run.means or {},
             "error_count": run.error_count,
+            "abstained_count": run.abstained_count,
+            "row_count": len(run.scores),
             "is_baseline": run.is_baseline,
         }

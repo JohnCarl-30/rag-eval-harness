@@ -95,7 +95,7 @@ rag-eval investigate ... --mode supervisor --trace trace.json
 rag-eval serve
 ```
 
-`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`), or if head has more errored rows than baseline (means skip errored rows, so a timing-out SUT would otherwise pass). `diff` prints the same means plus the worst per-row drops (rows paired by question) and always exits 0 on a successful compare.
+`regress` exits **1** if any mean drops by more than `--threshold` (default `0.05`). Means skip errored and abstained rows, so three row checks stop a worse head from hiding behind them: more errored rows than baseline, a share of abstained rows that rises by more than `--threshold`, or baseline questions missing from head. It exits **2** when baseline and head were scored by different evaluators, since their scores do not compare. `diff` prints the same table plus the worst per-row drops (rows paired by question) and always exits 0 on a successful compare.
 
 `investigate` runs the `regress` gate, then a LangGraph fan-out of Pydantic AI agents explains a failure: one diagnosis per failing stage (retrieval, generation), then a summary. `--mode supervisor` swaps the fixed graph for one agent that picks its own tools. `--trace` writes every agent run as JSON; `--otel` sends spans via Logfire. Same exit codes as `regress`. Install with `pip install 'rag-eval-harness[agent]'`. See [docs/agent.md](docs/agent.md).
 
@@ -110,7 +110,7 @@ rag-eval serve
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
 | Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. No cross-origin access unless `RAG_EVAL_CORS_ORIGINS` lists origins (comma-separated). |
-| Regression | Tag a run as baseline. Gate on **mean** delta and errored-row count. Per-row drops show in `diff` and the UI; they never fail the gate. |
+| Regression | Tag a run as baseline. Gate on **mean** delta, errored rows, abstained share, and question coverage ([details](docs/metrics.md#regression-gate)). Baseline and head must share an evaluator. Per-row drops show in `diff` and the UI; they never fail the gate. |
 
 ## Why not DeepEval, promptfoo, or RAGAS?
 

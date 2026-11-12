@@ -83,7 +83,7 @@ A live-judge test is skipped unless `OPENAI_API_KEY` is set. Unit tests inject f
 
 ## Regression gate
 
-Means only. Per-row diffs are in the UI and `rag-eval diff`. `regress` is the CI gate.
+Means, plus three row checks. Per-row diffs are in the UI and `rag-eval diff`. `regress` is the CI gate.
 
 ```bash
 rag-eval baseline <run-id>
@@ -91,4 +91,16 @@ rag-eval regress --baseline <run-id-or.json> --head <run-id-or.json> --threshold
 rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json> --metric context_recall
 ```
 
-Exit `1` if any baseline mean minus head mean is **greater than** `--threshold`. A missing head metric is treated as `0.0`.
+Exit `1` if any baseline mean minus head mean is **greater than** `--threshold`. A metric the baseline has and head lacks always fails and prints `head=missing`. A metric only head has is listed as `new, not gated`.
+
+Means leave out errored and abstained rows, and say nothing about which questions ran. So a head can keep its means while getting worse. Three checks close that:
+
+| Check | Fails when | Skipped when |
+| --- | --- | --- |
+| `errored rows` | head has more errored rows than baseline | a means-only file has no error count |
+| `abstained rows` | the abstained share of rows rises by more than `--threshold` | either side was written by 0.3.0 or earlier, or has no rows |
+| `questions covered` | a baseline question has no row in head (paired by question text) | either side has no rows |
+
+Extra questions in head are fine. Abstaining is gated as a share, not a count, because a refusal can be the right answer. A pipeline that starts refusing correctly on more than `--threshold` of the set trips the check once: read the rows, then tag the new run as the baseline.
+
+Exit `2` if baseline and head name different evaluators. `stub`, `lexical` and `ragas` share metric names and nothing else, so `regress` and `investigate` refuse the comparison. `diff` and the UI still line the two up, with a warning, for reading a judge against overlap ([nimbus-judge.md](nimbus-judge.md)).

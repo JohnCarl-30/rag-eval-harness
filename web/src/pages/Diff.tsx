@@ -2,6 +2,16 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DiffResponse, Run, api, fmt } from "../api";
 
+function failureReasons(diff: DiffResponse): string[] {
+  const reasons = diff.checks
+    .filter((check) => check.failed)
+    .map((check) => `${check.label} ${check.head} (baseline ${check.baseline})`);
+  if (diff.deltas.some((item) => item.dropped)) {
+    reasons.unshift("a mean dropped past the threshold");
+  }
+  return reasons;
+}
+
 export default function DiffPage() {
   const [params, setParams] = useSearchParams();
   const [runs, setRuns] = useState<Run[]>([]);
@@ -102,12 +112,13 @@ export default function DiffPage() {
       {error && <p className="text-sm text-bad">{error}</p>}
       {diff && (
         <>
+          {diff.warnings.map((warning) => (
+            <p key={warning} className="text-sm text-bad">
+              {warning}
+            </p>
+          ))}
           <p className={diff.passed ? "text-good" : "text-bad"}>
-            {diff.passed
-              ? "No regression vs threshold."
-              : diff.head.error_count > diff.baseline.error_count
-                ? `Regression: head errored on ${diff.head.error_count} rows (baseline ${diff.baseline.error_count}).`
-                : "Regression: a mean dropped past the threshold."}
+            {diff.passed ? "No regression vs threshold." : `Regression: ${failureReasons(diff).join("; ")}.`}
           </p>
           <table className="w-full border-collapse text-left text-sm">
             <thead className="font-mono text-xs uppercase text-ink/60">
@@ -123,11 +134,30 @@ export default function DiffPage() {
                 <tr key={item.metric}>
                   <td className="border-b border-rule py-2">{item.metric.replaceAll("_", " ")}</td>
                   <td className="border-b border-rule py-2 font-mono">{fmt(item.baseline)}</td>
-                  <td className="border-b border-rule py-2 font-mono">{fmt(item.head)}</td>
+                  <td className="border-b border-rule py-2 font-mono">
+                    {item.missing ? "missing" : fmt(item.head)}
+                  </td>
                   <td className={`border-b border-rule py-2 font-mono ${item.dropped ? "text-bad" : "text-good"}`}>
-                    {item.delta >= 0 ? "+" : ""}
-                    {fmt(item.delta)}
+                    {item.missing ? "" : `${item.delta >= 0 ? "+" : ""}${fmt(item.delta)}`}
                     {item.dropped ? " FAIL" : ""}
+                  </td>
+                </tr>
+              ))}
+              {Object.entries(diff.new_metrics).map(([metric, value]) => (
+                <tr key={metric}>
+                  <td className="border-b border-rule py-2">{metric.replaceAll("_", " ")}</td>
+                  <td className="border-b border-rule py-2 font-mono">—</td>
+                  <td className="border-b border-rule py-2 font-mono">{fmt(value)}</td>
+                  <td className="border-b border-rule py-2 font-mono text-ink/60">new, not gated</td>
+                </tr>
+              ))}
+              {diff.checks.map((check) => (
+                <tr key={check.label}>
+                  <td className="border-b border-rule py-2">{check.label}</td>
+                  <td className="border-b border-rule py-2 font-mono">{check.baseline}</td>
+                  <td className="border-b border-rule py-2 font-mono">{check.head}</td>
+                  <td className={`border-b border-rule py-2 font-mono ${check.failed ? "text-bad" : "text-good"}`}>
+                    {check.failed ? "FAIL" : "ok"}
                   </td>
                 </tr>
               ))}

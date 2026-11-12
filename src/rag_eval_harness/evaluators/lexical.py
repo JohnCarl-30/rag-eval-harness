@@ -31,6 +31,7 @@ class LexicalEvaluator:
                         ground_truth=row.ground_truth,
                         metrics={},
                         error=row.error,
+                        abstained=row.abstained,
                     )
                 )
                 continue
@@ -53,6 +54,7 @@ class LexicalEvaluator:
                     retrieved_contexts=row.retrieved_contexts,
                     ground_truth=row.ground_truth,
                     metrics=metrics,
+                    abstained=row.abstained,
                 )
             )
         return MetricSummary(

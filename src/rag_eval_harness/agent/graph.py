@@ -113,8 +113,8 @@ class Investigation:
             return "No regression. Nothing to investigate."
         if self.summary is None:
             return (
-                "The gate failed, but no row dropped on the failing metrics. "
-                "Check row errors with `rag-eval diff`."
+                "The gate failed, but no row dropped on a failing mean. The gate table "
+                "shows what did: errored rows, abstained rows, or questions missing from head."
             )
         lines = [
             "### Why the gate failed",

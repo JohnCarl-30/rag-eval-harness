@@ -37,6 +37,7 @@ class StubEvaluator:
                         ground_truth=row.ground_truth,
                         metrics={},
                         error=row.error,
+                        abstained=row.abstained,
                     )
                 )
                 continue
@@ -57,6 +58,7 @@ class StubEvaluator:
                     retrieved_contexts=row.retrieved_contexts,
                     ground_truth=row.ground_truth,
                     metrics=metrics,
+                    abstained=row.abstained,
                 )
             )
         return MetricSummary(

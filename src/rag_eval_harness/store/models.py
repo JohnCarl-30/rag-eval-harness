@@ -57,6 +57,8 @@ class Run(Base):
     is_baseline: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     means: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Added after 0.3.0. NULL on older runs: the gate skips the abstained check for them.
+    abstained_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -78,5 +80,7 @@ class RunScore(Base):
     ground_truth: Mapped[str | None] = mapped_column(Text, nullable=True)
     metrics: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Added after 0.3.0; Store adds it to older databases on startup.
+    abstained: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=False)
 
     run: Mapped[Run] = relationship(back_populates="scores")

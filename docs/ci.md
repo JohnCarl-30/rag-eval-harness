@@ -46,7 +46,7 @@ Inputs:
 | `agent-model` | | Pydantic AI model string, e.g. `anthropic:claude-sonnet-5`. Default `openai-chat:$OPENAI_MODEL` |
 | `anthropic-api-key` | | For `anthropic:*` agent models |
 
-The action runs `rag-eval eval` then, if `baseline` is set, `rag-eval regress` (exit 1 on drop). The gate's Markdown report goes to the job summary every time; outputs `passed` and `report` expose the result to later steps.
+The action runs `rag-eval eval` then, if `baseline` is set, `rag-eval regress` (exit 1 on a regression, exit 2 if the baseline was scored by a different evaluator). The gate's Markdown report goes to the job summary every time; outputs `passed` and `report` expose the result to later steps.
 
 ### Report on the pull request
 

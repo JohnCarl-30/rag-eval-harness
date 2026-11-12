@@ -123,6 +123,7 @@ class RagasEvaluator:
                 ground_truth=row.ground_truth,
                 metrics={},
                 error=row.error,
+                abstained=row.abstained,
             )
         kwargs = {
             "user_input": row.question,
@@ -158,6 +159,7 @@ class RagasEvaluator:
             ground_truth=row.ground_truth,
             metrics=scores,
             error=error,
+            abstained=row.abstained,
         )
 
     async def aevaluate(self, rows: list[EvalRow]) -> MetricSummary:

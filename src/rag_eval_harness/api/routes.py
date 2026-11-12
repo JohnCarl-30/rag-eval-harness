@@ -17,9 +17,17 @@ from rag_eval_harness.api.schemas import (
 from rag_eval_harness.engine import execute_run
 from rag_eval_harness.io import LoadError, RowCapError, load_text
 from rag_eval_harness.redact import redact_adapter_config, redact_error
-from rag_eval_harness.regression.compare import DEFAULT_THRESHOLD, compare_means, pair_rows
+from rag_eval_harness.regression.compare import (
+    DEFAULT_THRESHOLD,
+    RunSide,
+    compare_runs,
+    evaluator_mismatch,
+    pair_rows,
+)
+from rag_eval_harness.regression.markdown import row_check_lines
 from rag_eval_harness.store.models import Dataset, Run
 from rag_eval_harness.store.repo import Store
+from rag_eval_harness.types import RowScore
 
 router = APIRouter(prefix="/api")
 
@@ -62,6 +70,7 @@ def _run_out(run: Run) -> RunOut:
         is_baseline=run.is_baseline,
         means=run.means,
         error_count=run.error_count,
+        abstained_count=run.abstained_count,
         created_at=_iso(run.created_at) or "",
         completed_at=_iso(run.completed_at),
     )
@@ -189,6 +198,7 @@ def get_run(run_id: str, request: Request) -> RunDetailOut:
                 ground_truth=row.ground_truth,
                 metrics=row.metrics,
                 error=redact_error(row.error, run.adapter_config),
+                abstained=row.abstained,
             )
             for row in scores
         ],
@@ -208,6 +218,18 @@ def set_baseline(run_id: str, request: Request) -> RunOut:
     return _run_out(store.set_baseline(run_id))
 
 
+def _run_side(run: Run, rows: list[RowScore]) -> RunSide:
+    return RunSide(
+        ref=run.id,
+        means=run.means or {},
+        errors=run.error_count,
+        abstained=run.abstained_count,
+        row_count=len(rows),
+        evaluator=run.evaluator,
+        rows=rows,
+    )
+
+
 @router.get("/runs/{run_id}/diff", response_model=DiffOut)
 def diff_runs(
     run_id: str,
@@ -220,17 +242,13 @@ def diff_runs(
     baseline = store.get_run(against)
     if head is None or baseline is None:
         raise HTTPException(status_code=404, detail="Run not found")
-    report = compare_means(
-        baseline.means or {},
-        head.means or {},
-        threshold=threshold,
-        baseline_ref=baseline.id,
-        head_ref=head.id,
-        baseline_errors=baseline.error_count,
-        head_errors=head.error_count,
-    )
     head_rows = store.get_run_scores(head.id)
     base_rows = store.get_run_scores(baseline.id)
+    base_side = _run_side(baseline, base_rows)
+    head_side = _run_side(head, head_rows)
+    report = compare_runs(base_side, head_side, threshold=threshold)
+    # Like `rag-eval diff`, this is for reading: two evaluators still line up, with a warning.
+    mismatch = evaluator_mismatch(base_side, head_side)
     paired = [
         {
             "index": index,
@@ -247,5 +265,11 @@ def diff_runs(
         baseline=_run_out(baseline),
         head=_run_out(head),
         deltas=report.to_dict()["deltas"],
+        checks=[
+            {"label": label, "baseline": left, "head": right, "failed": failed}
+            for label, left, right, failed in row_check_lines(report)
+        ],
+        new_metrics=report.new_metrics,
+        warnings=[mismatch] if mismatch else [],
         rows=paired,
     )

@@ -15,12 +15,14 @@ from rag_eval_harness.engine import eval_from_path
 from rag_eval_harness.regression.compare import (
     DEFAULT_THRESHOLD,
     RegressionReport,
-    compare_means,
-    load_errors_ref,
-    load_means_ref,
-    load_rows_ref,
+    RunSide,
+    compare_runs,
+    evaluator_mismatch,
+    load_side,
+    require_rows,
     worst_row_drops,
 )
+from rag_eval_harness.regression.markdown import gate_markdown, row_check_lines
 from rag_eval_harness.store.repo import Store
 
 load_dotenv()
@@ -62,27 +64,39 @@ def _print_run(run, summary=None) -> None:
         typer.echo(f"Error:      {run.error_message}")
 
 
-def _print_errors(report) -> None:
-    if report.baseline_errors is None or report.head_errors is None:
-        return
-    flag = "FAIL" if report.errors_increased else "ok"
-    typer.echo(
-        f"  {'errored rows':20} baseline={report.baseline_errors}  "
-        f"head={report.head_errors}  {flag}"
-    )
-
-
 def _print_report(report: RegressionReport) -> None:
     typer.echo(f"threshold: {report.threshold}")
     typer.echo(f"baseline:  {report.baseline_ref}")
     typer.echo(f"head:      {report.head_ref}")
     for item in report.deltas:
+        if item.missing:
+            typer.echo(f"  {item.metric:20} baseline={item.baseline:.4f}  head=missing  FAIL")
+            continue
         flag = "FAIL" if item.dropped else "ok"
         typer.echo(
             f"  {item.metric:20} baseline={item.baseline:.4f}  head={item.head:.4f}  "
             f"delta={item.delta:+.4f}  {flag}"
         )
-    _print_errors(report)
+    for name, value in report.new_metrics.items():
+        typer.echo(f"  {name:20} baseline=n/a     head={value:.4f}  new, not gated")
+    for label, baseline, head, failed in row_check_lines(report):
+        flag = "FAIL" if failed else "ok"
+        typer.echo(f"  {label:20} baseline={baseline}  head={head}  {flag}")
+
+
+def _load_sides(baseline_ref: str, head_ref: str, store: Store) -> tuple[RunSide, RunSide]:
+    try:
+        return load_side(baseline_ref, store), load_side(head_ref, store)
+    except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(2) from exc
+
+
+def _require_same_evaluator(baseline: RunSide, head: RunSide) -> None:
+    problem = evaluator_mismatch(baseline, head)
+    if problem:
+        typer.echo(problem, err=True)
+        raise typer.Exit(2)
 
 
 def _write_report(
@@ -90,8 +104,6 @@ def _write_report(
 ) -> None:
     if path is None:
         return
-    from rag_eval_harness.regression.markdown import gate_markdown
-
     path.write_text(gate_markdown(report, explanation=explanation), encoding="utf-8")
     typer.echo(f"Wrote report {path}")
 
@@ -226,26 +238,12 @@ def regress(
     ] = None,
     db: DbOption = None,
 ) -> None:
-    """Compare mean metrics. Exit 1 if any mean drops by more than --threshold
-    or head has more errored rows than baseline."""
-    store = _store(db)
-    try:
-        b_ref, b_means = load_means_ref(baseline_ref, store)
-        h_ref, h_means = load_means_ref(head_ref, store)
-        b_errors = load_errors_ref(baseline_ref, store)
-        h_errors = load_errors_ref(head_ref, store)
-    except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(2) from exc
-    report = compare_means(
-        b_means,
-        h_means,
-        threshold=threshold,
-        baseline_ref=b_ref,
-        head_ref=h_ref,
-        baseline_errors=b_errors,
-        head_errors=h_errors,
-    )
+    """Compare mean metrics. Exit 1 if any mean drops by more than --threshold, head has
+    more errored rows, its share of abstained rows rises by more than --threshold, or it
+    is missing baseline questions. Exit 2 if the two were scored by different evaluators."""
+    baseline, head = _load_sides(baseline_ref, head_ref, _store(db))
+    _require_same_evaluator(baseline, head)
+    report = compare_runs(baseline, head, threshold=threshold)
     _print_report(report)
     _write_report(report_path, report)
     if not report.passed:
@@ -276,26 +274,17 @@ def diff(
     db: DbOption = None,
 ) -> None:
     """Print mean deltas and the worst per-row drops. Use regress to fail CI."""
-    store = _store(db)
+    baseline, head = _load_sides(baseline_ref, head_ref, _store(db))
     try:
-        b_ref, b_means = load_means_ref(baseline_ref, store)
-        h_ref, h_means = load_means_ref(head_ref, store)
-        b_errors = load_errors_ref(baseline_ref, store)
-        h_errors = load_errors_ref(head_ref, store)
-        _, b_rows = load_rows_ref(baseline_ref, store)
-        _, h_rows = load_rows_ref(head_ref, store)
-    except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
+        b_rows, h_rows = require_rows(baseline), require_rows(head)
+    except ValueError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
-    report = compare_means(
-        b_means,
-        h_means,
-        threshold=threshold,
-        baseline_ref=b_ref,
-        head_ref=h_ref,
-        baseline_errors=b_errors,
-        head_errors=h_errors,
-    )
+    # diff is for reading, so it still lines up two evaluators (lexical vs a judge).
+    problem = evaluator_mismatch(baseline, head)
+    if problem:
+        typer.echo(f"warning: {problem}", err=True)
+    report = compare_runs(baseline, head, threshold=threshold)
     _print_report(report)
     drops = worst_row_drops(b_rows, h_rows, metric=metric, limit=limit)
     if not drops:
@@ -383,26 +372,14 @@ def investigate(
         except RuntimeError as exc:
             typer.echo(str(exc), err=True)
             raise typer.Exit(2) from exc
-    store = _store(db)
+    baseline, head = _load_sides(baseline_ref, head_ref, _store(db))
     try:
-        b_ref, b_means = load_means_ref(baseline_ref, store)
-        h_ref, h_means = load_means_ref(head_ref, store)
-        _, b_rows = load_rows_ref(baseline_ref, store)
-        _, h_rows = load_rows_ref(head_ref, store)
-        b_errors = load_errors_ref(baseline_ref, store)
-        h_errors = load_errors_ref(head_ref, store)
-    except (KeyError, ValueError, OSError, json.JSONDecodeError) as exc:
+        b_rows, h_rows = require_rows(baseline), require_rows(head)
+    except ValueError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(2) from exc
-    report = compare_means(
-        b_means,
-        h_means,
-        threshold=threshold,
-        baseline_ref=b_ref,
-        head_ref=h_ref,
-        baseline_errors=b_errors,
-        head_errors=h_errors,
-    )
+    _require_same_evaluator(baseline, head)
+    report = compare_runs(baseline, head, threshold=threshold)
     _print_report(report)
     if report.passed:
         _write_report(report_path, report)
