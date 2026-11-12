@@ -7,6 +7,7 @@ from rag_eval_harness.adapters.http import HttpAdapter
 from rag_eval_harness.adapters.traces import TracesAdapter
 from rag_eval_harness.evaluators import get_evaluator
 from rag_eval_harness.io import RowCapError, load_path, load_text
+from rag_eval_harness.redact import redact_error
 from rag_eval_harness.store.models import Run
 from rag_eval_harness.store.repo import Store
 from rag_eval_harness.types import ROW_CAP, EvalRow, MetricSummary
@@ -18,7 +19,18 @@ def _ensure_cap(rows: list[EvalRow]) -> list[EvalRow]:
     return rows
 
 
-def execute_run(store: Store, run_id: str) -> Run:
+def execute_run(
+    store: Store,
+    run_id: str,
+    *,
+    sut_url: str | None = None,
+    sut_token: str | None = None,
+) -> Run:
+    """Run the adapter and evaluator for a stored run.
+
+    The store keeps a redacted adapter config (no token, no URL credentials or query),
+    so an HTTP run gets its real URL and token from the caller, held in memory only.
+    """
     run = store.get_run(run_id)
     if run is None:
         raise KeyError(run_id)
@@ -28,12 +40,14 @@ def execute_run(store: Store, run_id: str) -> Run:
         _ensure_cap(rows)
         config = run.adapter_config or {}
         if run.adapter_type == "http":
-            url = config.get("url")
-            if not url:
-                raise ValueError("HTTP adapter requires adapter_config.url")
+            if not sut_url:
+                raise ValueError(
+                    "HTTP adapter requires the SUT URL: pass sut_url to execute_run. "
+                    "It is not read back from the store, which keeps a redacted copy."
+                )
             rows = HttpAdapter(
-                url,
-                token=config.get("token"),
+                sut_url,
+                token=sut_token,
                 timeout=float(config.get("timeout", 30)),
             ).run(rows)
         elif run.adapter_type == "traces":
@@ -43,7 +57,8 @@ def execute_run(store: Store, run_id: str) -> Run:
         summary = get_evaluator(run.evaluator).evaluate(rows)
         return store.complete_run(run_id, summary)
     except Exception as exc:
-        store.fail_run(run_id, str(exc))
+        message = redact_error(str(exc), {"url": sut_url, "token": sut_token})
+        store.fail_run(run_id, message or type(exc).__name__)
         raise
 
 
@@ -65,16 +80,19 @@ def run_eval(
     dataset = store.find_identical_dataset(rows, name=dataset_name) or store.create_dataset(
         rows, name=dataset_name, filename=filename
     )
+    config = adapter_config or {}
     run = store.create_run(
         dataset_id=dataset.id,
         adapter_type=adapter_type,
-        adapter_config=adapter_config or {},
+        adapter_config=config,
         evaluator=evaluator,
         label=label,
         git_sha=git_sha,
         status="queued",
     )
-    completed = execute_run(store, run.id)
+    completed = execute_run(
+        store, run.id, sut_url=config.get("url"), sut_token=config.get("token")
+    )
     scores = store.get_run_scores(completed.id)
     summary = MetricSummary(
         means=completed.means or {},

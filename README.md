@@ -62,7 +62,7 @@ uv run rag-eval eval examples/dummy-rag/golden.csv \
 UI (dev):
 
 ```bash
-uv run rag-eval serve          # API on 127.0.0.1:8000, open on loopback (no API key)
+uv run rag-eval serve          # API on 127.0.0.1:8000, open on loopback unless RAG_EVAL_API_KEY is set
 cd web && npm install && npm run dev   # Vite on :5173, proxies /api
 ```
 
@@ -86,7 +86,7 @@ pip install 'rag-eval-harness[agent]'   # rag-eval investigate
 
 ```bash
 rag-eval eval traces.jsonl --evaluator stub
-rag-eval eval golden.csv --sut-url https://your-rag.example/query --sut-token "$TOKEN"
+RAG_EVAL_SUT_TOKEN="$TOKEN" rag-eval eval golden.csv --sut-url https://your-rag.example/query
 rag-eval baseline <run-id>
 rag-eval regress --baseline <run-id-or.json> --head <run-id-or.json> --threshold 0.05
 rag-eval diff --baseline <run-id-or.json> --head <run-id-or.json>
@@ -109,7 +109,7 @@ rag-eval serve
 | Evaluators | `stub` (stable hashes, CI smoke), `lexical` (token overlap vs context, use this for real gates), `ragas` (`OPENAI_API_KEY`, optional `OPENAI_BASE_URL`). |
 | Store | SQLite default (`DATABASE_URL`). Postgres via `postgresql+psycopg://…`. |
 | Jobs | In-process. **100-row cap.** No Redis. |
-| Auth | Open on loopback. `RAG_EVAL_API_KEY` required when binding a non-loopback address. No cross-origin access unless `RAG_EVAL_CORS_ORIGINS` lists origins (comma-separated). |
+| Auth | Open on loopback when no key is set. `RAG_EVAL_API_KEY` is enforced whenever it is set, and required when binding a non-loopback address. No cross-origin access unless `RAG_EVAL_CORS_ORIGINS` lists origins (comma-separated). |
 | Regression | Tag a run as baseline. Gate on **mean** delta, errored rows, abstained share, and question coverage ([details](docs/metrics.md#regression-gate)). Baseline and head must share an evaluator. Per-row drops show in `diff` and the UI; they never fail the gate. |
 
 ## Why not DeepEval, promptfoo, or RAGAS?

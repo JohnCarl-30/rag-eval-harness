@@ -45,14 +45,15 @@ and respond:
 {"answer": "…", "retrieved_contexts": ["…"]}
 ```
 
-`response` / `contexts` aliases are accepted. Add `"abstained": true` (or `"escalated": true`) when the SUT refused or handed off to a human. Each row has its own timeout (CLI `--timeout`, API `timeout_seconds`). HTTP 4xx/5xx, timeouts, and malformed JSON become row errors. Those error strings omit the SUT URL, so a query token in `--sut-url` does not land in the store.
+`response` / `contexts` aliases are accepted. Add `"abstained": true` (or `"escalated": true`) when the SUT refused or handed off to a human. Each row has its own timeout (CLI `--timeout`, API `timeout_seconds`). HTTP 4xx/5xx, timeouts, and malformed JSON become row errors. Those error strings omit the SUT URL. The store keeps a redacted adapter config: no bearer token, and the SUT URL without userinfo, query, or fragment. The real URL and token live in memory for the length of the run.
 
 ```bash
-rag-eval eval golden.csv \
+RAG_EVAL_SUT_TOKEN="$TOKEN" rag-eval eval golden.csv \
   --sut-url http://127.0.0.1:8080/query \
-  --sut-token "$TOKEN" \
   --evaluator stub
 ```
+
+`--sut-token` still works. The env var keeps the token out of the process list and shell history.
 
 The dummy FAQ server in `examples/dummy-rag` implements this contract.
 

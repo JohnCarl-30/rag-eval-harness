@@ -41,7 +41,9 @@ def create_app(
     host = bind_host if bind_host is not None else os.environ.get("RAG_EVAL_HOST", settings.host)
     env_key = os.environ.get("RAG_EVAL_API_KEY") or settings.api_key
     key = api_key if api_key is not None else env_key
-    auth_required = bind_requires_auth(host)
+    # A key that is set is always enforced. A loopback bind behind a reverse proxy is
+    # reachable from outside, so "loopback" alone must not switch a configured key off.
+    auth_required = bind_requires_auth(host) or bool(key)
 
     app = FastAPI(
         title="rag-eval-harness",

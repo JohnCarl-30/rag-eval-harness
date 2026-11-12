@@ -29,8 +29,8 @@ docker compose --profile postgres up --build
 
 - **datasets** — name, filename, row count
 - **dataset_rows** — question, optional ground truth / answer / contexts
-- **runs** — adapter config, evaluator, label, git SHA, status (`queued|running|completed|failed`), means, error count, `is_baseline`
-- **run_scores** — per-row metrics and errors
+- **runs** — redacted adapter config (no SUT token; SUT URL without userinfo or query), evaluator, label, git SHA, status (`queued|running|completed|failed`), means, error and abstained counts, `is_baseline`
+- **run_scores** — per-row metrics, errors, and `abstained`
 
 Tagging a baseline clears `is_baseline` on other runs of the same dataset.
 

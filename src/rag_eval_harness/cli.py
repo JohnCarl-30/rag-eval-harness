@@ -164,7 +164,12 @@ def eval(  # noqa: A001 — matches the public CLI contract
     ] = None,
     sut_token: Annotated[
         str | None,
-        typer.Option("--sut-token", help="Optional bearer token sent to the SUT."),
+        typer.Option(
+            "--sut-token",
+            envvar="RAG_EVAL_SUT_TOKEN",
+            help="Optional bearer token sent to the SUT. Prefer the env var: "
+            "an argument shows up in the process list and shell history.",
+        ),
     ] = None,
     evaluator: Annotated[str, typer.Option(help="stub, lexical, or ragas.")] = "stub",
     timeout: Annotated[float, typer.Option(help="Per-row HTTP timeout in seconds.")] = 30.0,

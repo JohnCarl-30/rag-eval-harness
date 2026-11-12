@@ -14,8 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `regress` and `investigate` compared a `stub` baseline to a `lexical` or `ragas` head as if the scores meant the same thing. They now exit 2. `diff` and the UI keep working across evaluators and print a warning.
 - A metric missing from head was scored as `0.0`, so it passed when the baseline value was under the threshold. It now always fails and shows as `missing`. Metrics only head has are listed as `new, not gated` instead of being dropped from the table.
 
+### Security
+
+- `RAG_EVAL_API_KEY` was ignored on a loopback bind, so an API behind a reverse proxy on `127.0.0.1` was open even with a key configured. A key that is set is now enforced on every bind. Loopback with no key stays open.
+- The SUT bearer token and the full SUT URL (userinfo and query included) were written to `runs.adapter_config` in plaintext. The store now keeps a redacted config, and the real URL and token stay in memory for the run. Opening an existing database redacts rows written by earlier versions; rotate any token that was stored.
+- `--sut-token` also reads `RAG_EVAL_SUT_TOKEN`, which keeps the token out of the process list.
+- The GitHub Action passed inputs into its shell steps by expression, so an input built from untrusted text (a PR title as `label`) could run as code. Inputs now reach the scripts through environment variables.
+
 ### Changed
 
+- `execute_run` takes `sut_url` and `sut_token` keyword arguments and no longer reads them from the stored run. An HTTP run executed without `sut_url` fails with a clear error.
 - The diff API response adds `checks`, `new_metrics` and `warnings`; `passed` now reflects the abstained and coverage checks. Run responses add `abstained_count`, rows add `abstained`.
 
 ## [0.3.0] - 2026-09-29

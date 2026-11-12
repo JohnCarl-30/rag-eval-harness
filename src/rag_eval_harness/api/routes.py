@@ -137,9 +137,9 @@ def dataset_rows(dataset_id: str, request: Request) -> list[dict[str, Any]]:
     ]
 
 
-def _run_job(store: Store, run_id: str) -> None:
+def _run_job(store: Store, run_id: str, sut_url: str | None, sut_token: str | None) -> None:
     try:
-        execute_run(store, run_id)
+        execute_run(store, run_id, sut_url=sut_url, sut_token=sut_token)
     except Exception:
         # execute_run already marks the run failed
         return
@@ -171,7 +171,8 @@ def create_run(
         git_sha=payload.git_sha,
         status="queued",
     )
-    background_tasks.add_task(_run_job, store, run.id)
+    # The store redacts the config, so the job carries the real URL and token itself.
+    background_tasks.add_task(_run_job, store, run.id, payload.sut_url, payload.sut_token)
     return _run_out(run)
 
 

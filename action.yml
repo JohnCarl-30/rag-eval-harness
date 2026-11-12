@@ -85,6 +85,8 @@ outputs:
 
 runs:
   using: composite
+  # Inputs reach the shell through env, never by expression inside a script: an
+  # input built from a PR title or branch name would otherwise run as code.
   steps:
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -92,43 +94,55 @@ runs:
         python-version: ${{ inputs.python-version }}
     - name: Install rag-eval-harness
       shell: bash
+      env:
+        IN_PACKAGE: ${{ inputs.package }}
+        IN_EXTRA: ${{ inputs.extra }}
+        IN_INVESTIGATE: ${{ inputs.investigate }}
       run: |
         python -m pip install --upgrade pip
-        EXTRA="${{ inputs.extra }}"
-        if [[ "${{ inputs.investigate }}" == "true" && -z "$EXTRA" ]]; then
+        EXTRA="$IN_EXTRA"
+        if [[ "$IN_INVESTIGATE" == "true" && -z "$EXTRA" ]]; then
           EXTRA="[agent]"
         fi
-        python -m pip install "${{ inputs.package }}${EXTRA}"
+        python -m pip install "${IN_PACKAGE}${EXTRA}"
     - name: Evaluate
       shell: bash
       env:
         OPENAI_API_KEY: ${{ inputs.openai-api-key }}
         OPENAI_BASE_URL: ${{ inputs.openai-base-url }}
+        IN_DATABASE_URL: ${{ inputs.database-url }}
+        IN_TRACES: ${{ inputs.traces }}
+        IN_DATASET: ${{ inputs.dataset }}
+        IN_EVALUATOR: ${{ inputs.evaluator }}
+        IN_OUTPUT: ${{ inputs.output }}
+        IN_SUT_URL: ${{ inputs.sut-url }}
+        IN_SUT_TOKEN: ${{ inputs.sut-token }}
+        IN_LABEL: ${{ inputs.label }}
       run: |
         set -euo pipefail
-        if [[ -n "${{ inputs.database-url }}" ]]; then
-          export DATABASE_URL="${{ inputs.database-url }}"
+        if [[ -n "$IN_DATABASE_URL" ]]; then
+          export DATABASE_URL="$IN_DATABASE_URL"
         fi
-        SOURCE="${{ inputs.traces }}"
-        if [[ -n "${{ inputs.dataset }}" ]]; then
-          SOURCE="${{ inputs.dataset }}"
+        SOURCE="$IN_TRACES"
+        if [[ -n "$IN_DATASET" ]]; then
+          SOURCE="$IN_DATASET"
         fi
         if [[ -z "$SOURCE" ]]; then
           echo "Provide traces or dataset" >&2
           exit 2
         fi
-        ARGS=(eval "$SOURCE" --evaluator "${{ inputs.evaluator }}" --output "${{ inputs.output }}")
-        if [[ -n "${{ inputs.sut-url }}" ]]; then
-          ARGS+=(--sut-url "${{ inputs.sut-url }}")
+        ARGS=(eval "$SOURCE" --evaluator "$IN_EVALUATOR" --output "$IN_OUTPUT")
+        if [[ -n "$IN_SUT_URL" ]]; then
+          ARGS+=(--sut-url "$IN_SUT_URL")
         fi
-        if [[ -n "${{ inputs.sut-token }}" ]]; then
-          ARGS+=(--sut-token "${{ inputs.sut-token }}")
+        if [[ -n "$IN_SUT_TOKEN" ]]; then
+          ARGS+=(--sut-token "$IN_SUT_TOKEN")
         fi
-        if [[ -n "${{ inputs.label }}" ]]; then
-          ARGS+=(--label "${{ inputs.label }}")
+        if [[ -n "$IN_LABEL" ]]; then
+          ARGS+=(--label "$IN_LABEL")
         fi
-        if [[ -n "${{ github.sha }}" ]]; then
-          ARGS+=(--git-sha "${{ github.sha }}")
+        if [[ -n "${GITHUB_SHA:-}" ]]; then
+          ARGS+=(--git-sha "$GITHUB_SHA")
         fi
         rag-eval "${ARGS[@]}"
     - name: Regress vs baseline
@@ -140,20 +154,25 @@ runs:
         OPENAI_BASE_URL: ${{ inputs.openai-base-url }}
         ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
         RAG_EVAL_AGENT_MODEL: ${{ inputs.agent-model }}
+        IN_DATABASE_URL: ${{ inputs.database-url }}
+        IN_INVESTIGATE: ${{ inputs.investigate }}
+        IN_BASELINE: ${{ inputs.baseline }}
+        IN_OUTPUT: ${{ inputs.output }}
+        IN_THRESHOLD: ${{ inputs.threshold }}
       run: |
         set -uo pipefail
-        if [[ -n "${{ inputs.database-url }}" ]]; then
-          export DATABASE_URL="${{ inputs.database-url }}"
+        if [[ -n "$IN_DATABASE_URL" ]]; then
+          export DATABASE_URL="$IN_DATABASE_URL"
         fi
         REPORT="$RUNNER_TEMP/rag-eval-report.md"
         COMMAND=regress
-        if [[ "${{ inputs.investigate }}" == "true" ]]; then
+        if [[ "$IN_INVESTIGATE" == "true" ]]; then
           COMMAND=investigate
         fi
         rag-eval "$COMMAND" \
-          --baseline "${{ inputs.baseline }}" \
-          --head "${{ inputs.output }}" \
-          --threshold "${{ inputs.threshold }}" \
+          --baseline "$IN_BASELINE" \
+          --head "$IN_OUTPUT" \
+          --threshold "$IN_THRESHOLD" \
           --report "$REPORT"
         STATUS=$?
         if [[ -f "$REPORT" ]]; then
@@ -184,4 +203,6 @@ runs:
     - name: Fail on regression
       if: ${{ inputs.baseline != '' }}
       shell: bash
-      run: exit "${{ steps.gate.outputs.status }}"
+      env:
+        GATE_STATUS: ${{ steps.gate.outputs.status }}
+      run: exit "$GATE_STATUS"

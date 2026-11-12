@@ -8,6 +8,7 @@ from sqlalchemy import create_engine, inspect, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, selectinload, sessionmaker
 
+from rag_eval_harness.redact import redact_adapter_config
 from rag_eval_harness.store.models import Base, Dataset, DatasetRow, Run, RunScore
 from rag_eval_harness.types import EvalRow, MetricSummary, RowScore
 
@@ -66,9 +67,28 @@ class Store:
         Base.metadata.create_all(self.engine)
         _add_missing_columns(self.engine)
         self._session_factory = sessionmaker(self.engine, expire_on_commit=False, future=True)
+        self._scrub_stored_secrets()
 
     def session(self) -> Session:
         return self._session_factory()
+
+    def _scrub_stored_secrets(self) -> None:
+        """Redact SUT tokens and URL credentials that 0.3.0 and earlier wrote in plaintext.
+
+        Nothing reads them back: a run gets its secrets from the caller, in memory.
+        """
+        with self.session() as session:
+            stored = session.execute(
+                select(Run.id, Run.adapter_config).where(Run.adapter_type == "http")
+            ).all()
+            dirty = False
+            for run_id, config in stored:
+                cleaned = redact_adapter_config(config)
+                if cleaned != (config or {}):
+                    session.get(Run, run_id).adapter_config = cleaned
+                    dirty = True
+            if dirty:
+                session.commit()
 
     def create_dataset(
         self,
@@ -164,7 +184,8 @@ class Store:
                 id=_new_id(),
                 dataset_id=dataset_id,
                 adapter_type=adapter_type,
-                adapter_config=adapter_config or {},
+                # Secrets never reach the database; see engine.execute_run.
+                adapter_config=redact_adapter_config(adapter_config),
                 evaluator=evaluator,
                 label=label,
                 git_sha=git_sha,
