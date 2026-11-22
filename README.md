@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/JohnCarl-30/rag-eval-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/JohnCarl-30/rag-eval-harness/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/rag-eval-harness)](https://pypi.org/project/rag-eval-harness/)
+[![Marketplace](https://img.shields.io/badge/Marketplace-RAG%20Eval%20Regression%20Gate-purple?logo=github)](https://github.com/marketplace/actions/rag-eval-regression-gate)
 [![Python](https://img.shields.io/pypi/pyversions/rag-eval-harness)](https://pypi.org/project/rag-eval-harness/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
