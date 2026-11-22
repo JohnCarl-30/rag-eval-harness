@@ -45,6 +45,9 @@ Inputs:
 | `investigate` | `false` | `"true"` runs `rag-eval investigate` instead of `regress`; installs `[agent]` when `extra` is empty |
 | `agent-model` | | Pydantic AI model string, e.g. `anthropic:claude-sonnet-5`. Default `openai-chat:$OPENAI_MODEL` |
 | `anthropic-api-key` | | For `anthropic:*` agent models |
+| `otel` | `false` | `"true"` adds `--otel` to `investigate`; installs `[agent,trace]` when `extra` is empty |
+| `otel-endpoint` | | Full OTLP/HTTP traces URL. Sets `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` |
+| `otel-headers` | | `key=value` pairs, comma separated. Sets `OTEL_EXPORTER_OTLP_TRACES_HEADERS` |
 
 The action runs `rag-eval eval` then, if `baseline` is set, `rag-eval regress` (exit 1 on drop). The gate's Markdown report goes to the job summary every time; outputs `passed` and `report` expose the result to later steps.
 
@@ -69,6 +72,27 @@ steps:
 ```
 
 The comment is one per PR: later pushes edit it instead of stacking new ones. With `investigate`, a failed gate adds *Why the gate failed*: the stage that broke, the rows that show it, and a fix to try. The job still fails on the gate alone; a model error leaves the table and a one-line note. Fork PRs get a read-only token, so the comment step warns and moves on; the job summary still has the report.
+
+### Trace the investigation
+
+Newer than v0.3.1. Pin `@main` until the next tag.
+
+`otel: "true"` sends the `investigate` agent spans to an OpenTelemetry backend. This example sends them to [Langfuse](agent.md#langfuse). Store the base64 of `public-key:secret-key` as the `LANGFUSE_AUTH` secret.
+
+```yaml
+- uses: JohnCarl-30/rag-eval-harness@main
+  with:
+    traces: tests/golden/traces.jsonl
+    evaluator: lexical
+    baseline: tests/golden/baseline.json
+    investigate: "true"
+    openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+    otel: "true"
+    otel-endpoint: https://cloud.langfuse.com/api/public/otel/v1/traces
+    otel-headers: Authorization=Basic ${{ secrets.LANGFUSE_AUTH }},x-langfuse-ingestion-version=4
+```
+
+Spans carry prompts and responses, so dataset row text goes to the tracing backend. `otel` without `investigate` sends nothing and warns. With a custom `extra`, include `trace` yourself, for example `[agent,trace]`. A failed export does not fail the job; the gate alone decides.
 
 Commit a snapshot from a known-good run as `baseline.json`:
 
