@@ -79,7 +79,37 @@ The workflow caps each agent run at 4 model requests. A Nimbus-sized failure wit
 
 A delegated run records only its own usage. Its parent's usage already includes it, so `totals` counts top-level runs only. A run that raised has an `error` field.
 
-`--otel` sends live spans through [Logfire](https://github.com/pydantic/logfire) instead. It needs `pip install 'rag-eval-harness[trace]'`. With `LOGFIRE_TOKEN` set, spans go to Logfire. Without it, set the standard `OTEL_EXPORTER_OTLP_ENDPOINT` to send to any OpenTelemetry backend (Jaeger, Grafana Tempo, Honeycomb).
+`--otel` sends live spans through [Logfire](https://github.com/pydantic/logfire) instead. It needs `pip install 'rag-eval-harness[trace]'`. With `LOGFIRE_TOKEN` set, spans go to Logfire. With the standard `OTEL_EXPORTER_OTLP_ENDPOINT` or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` set, they go to that OpenTelemetry backend (Langfuse, Jaeger, Grafana Tempo, Honeycomb). With both, they go to both. The export is OTLP over HTTP with protobuf; gRPC endpoints do not work.
+
+A backend that is down or rejects the spans logs an export error. It does not change the exit code.
+
+### Langfuse
+
+[Langfuse](https://langfuse.com) takes the spans on its OpenTelemetry endpoint. Each agent run shows as a trace with its model calls, tool calls, prompts, and token counts.
+
+Build the auth string from the project's public and secret keys:
+
+```bash
+export AUTH_STRING=$(printf '%s' "pk-lf-...:sk-lf-..." | base64 | tr -d '\n')
+```
+
+Point the exporter at Langfuse and run with `--otel`:
+
+```bash
+export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://cloud.langfuse.com/api/public/otel/v1/traces"
+export OTEL_EXPORTER_OTLP_TRACES_HEADERS="Authorization=Basic ${AUTH_STRING},x-langfuse-ingestion-version=4"
+rag-eval investigate --baseline baseline.json --head head.json --otel
+```
+
+| Langfuse | Traces endpoint |
+| --- | --- |
+| EU cloud | `https://cloud.langfuse.com/api/public/otel/v1/traces` |
+| US cloud | `https://us.cloud.langfuse.com/api/public/otel/v1/traces` |
+| Self-hosted (v3.22.0 or later) | `http://localhost:3000/api/public/otel/v1/traces` |
+
+Use the traces variables, not `OTEL_EXPORTER_OTLP_ENDPOINT`. The general variable also turns on metric and log export, which Langfuse does not need.
+
+In CI, the GitHub Action takes the same two values as inputs. See [CI](ci.md#trace-the-investigation).
 
 ## What leaves the machine
 

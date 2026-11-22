@@ -69,6 +69,16 @@ inputs:
   anthropic-api-key:
     description: Key for anthropic:* agent models
     required: false
+  otel:
+    description: '"true" to send investigate agent spans over OTLP (installs the trace extra; spans carry prompts and row text)'
+    required: false
+    default: "false"
+  otel-endpoint:
+    description: Full OTLP/HTTP traces URL, e.g. https://cloud.langfuse.com/api/public/otel/v1/traces
+    required: false
+  otel-headers:
+    description: OTLP headers as key=value pairs, comma separated, e.g. Authorization=Basic <base64 key pair>
+    required: false
   comment:
     description: '"true" to post the report as one PR comment, updated on each push (needs pull-requests: write)'
     required: false
@@ -100,6 +110,9 @@ runs:
         EXTRA="${{ inputs.extra }}"
         if [[ "${{ inputs.investigate }}" == "true" && -z "$EXTRA" ]]; then
           EXTRA="[agent]"
+          if [[ "${{ inputs.otel }}" == "true" ]]; then
+            EXTRA="[agent,trace]"
+          fi
         fi
         python -m pip install "${{ inputs.package }}${EXTRA}"
     - name: Evaluate
@@ -143,6 +156,8 @@ runs:
         OPENAI_BASE_URL: ${{ inputs.openai-base-url }}
         ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
         RAG_EVAL_AGENT_MODEL: ${{ inputs.agent-model }}
+        OTEL_ENDPOINT: ${{ inputs.otel-endpoint }}
+        OTEL_HEADERS: ${{ inputs.otel-headers }}
       run: |
         set -uo pipefail
         if [[ -n "${{ inputs.database-url }}" ]]; then
@@ -150,14 +165,29 @@ runs:
         fi
         REPORT="$RUNNER_TEMP/rag-eval-report.md"
         COMMAND=regress
+        EXTRA_ARGS=()
         if [[ "${{ inputs.investigate }}" == "true" ]]; then
           COMMAND=investigate
+        fi
+        if [[ "${{ inputs.otel }}" == "true" ]]; then
+          if [[ "$COMMAND" == "investigate" ]]; then
+            EXTRA_ARGS+=(--otel)
+            if [[ -n "$OTEL_ENDPOINT" ]]; then
+              export OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="$OTEL_ENDPOINT"
+            fi
+            if [[ -n "$OTEL_HEADERS" ]]; then
+              export OTEL_EXPORTER_OTLP_TRACES_HEADERS="$OTEL_HEADERS"
+            fi
+          else
+            echo "::warning::rag-eval: otel only traces investigate. Set investigate: \"true\" to send spans."
+          fi
         fi
         rag-eval "$COMMAND" \
           --baseline "${{ inputs.baseline }}" \
           --head "${{ inputs.output }}" \
           --threshold "${{ inputs.threshold }}" \
-          --report "$REPORT"
+          --report "$REPORT" \
+          ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
         STATUS=$?
         if [[ -f "$REPORT" ]]; then
           cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"

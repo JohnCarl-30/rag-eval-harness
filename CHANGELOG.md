@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- GitHub Action inputs `otel`, `otel-endpoint`, and `otel-headers`. `otel: "true"` runs `investigate` with `--otel` and installs the `trace` extra; the other two set the OTLP traces endpoint and headers. See [CI](docs/ci.md#trace-the-investigation).
+- Langfuse setup for `investigate --otel` in [docs/agent.md](docs/agent.md#langfuse).
+
 ## [0.3.1] - 2026-11-22
 
 ### Changed
