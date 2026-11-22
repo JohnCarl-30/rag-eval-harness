@@ -1,6 +1,9 @@
-name: rag-eval
+name: RAG Eval Regression Gate
 description: Evaluate RAG traces or an HTTP SUT and fail if mean metrics regress vs a baseline
 author: rag-eval-harness
+branding:
+  icon: check-circle
+  color: purple
 
 inputs:
   traces:

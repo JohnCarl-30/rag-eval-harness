@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-22
+
+### Changed
+
+- The GitHub Action is listed on GitHub Marketplace as "RAG Eval Regression Gate", with an icon and color. Inputs, outputs, and the `uses:` path are unchanged.
+
 ## [0.3.0] - 2026-09-29
 
 ### Added
