@@ -17,7 +17,7 @@ From a checkout of this repository:
 From another repo, after this project is tagged. `stub` is smoke. Use `lexical` when the gate should mean overlap, not hashes.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@v0.3.1
+- uses: JohnCarl-30/rag-eval-harness@v0.3.2
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical
@@ -61,7 +61,7 @@ permissions:
   pull-requests: write
 steps:
   - uses: actions/checkout@v4
-  - uses: JohnCarl-30/rag-eval-harness@v0.3.1
+  - uses: JohnCarl-30/rag-eval-harness@v0.3.2
     with:
       traces: tests/golden/traces.jsonl
       evaluator: lexical
@@ -75,12 +75,12 @@ The comment is one per PR: later pushes edit it instead of stacking new ones. Wi
 
 ### Trace the investigation
 
-Newer than v0.3.1. Pin `@main` until the next tag.
+Needs v0.3.2 or later.
 
 `otel: "true"` sends the `investigate` agent spans to an OpenTelemetry backend. This example sends them to [Langfuse](agent.md#langfuse). Store the base64 of `public-key:secret-key` as the `LANGFUSE_AUTH` secret.
 
 ```yaml
-- uses: JohnCarl-30/rag-eval-harness@main
+- uses: JohnCarl-30/rag-eval-harness@v0.3.2
   with:
     traces: tests/golden/traces.jsonl
     evaluator: lexical
