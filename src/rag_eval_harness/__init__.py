@@ -7,6 +7,6 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("rag-eval-harness")
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "0.3.1"
+    __version__ = "0.3.2"
 
 __all__ = ["__version__"]
